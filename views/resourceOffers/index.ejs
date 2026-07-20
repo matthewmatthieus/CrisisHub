@@ -1,0 +1,76 @@
+<div class="page-header">
+    <div>
+        <h1>Resource Offers</h1>
+        <p>Manage available community supplies and connect them to active help requests.</p>
+    </div>
+
+    <div class="page-actions">
+        <a class="btn btn-primary" href="/resourceOffers/new">
+            <i class="bi bi-plus-circle me-1"></i>
+            New Offer
+        </a>
+    </div>
+</div>
+
+<% if (success) { %>
+    <div class="alert alert-success"><%= success %></div>
+<% } %>
+
+<% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="content-card">
+    <div class="card-header">
+        <h2>
+            <i class="bi bi-box-seam"></i>
+            Available Resources
+        </h2>
+        <span class="text-secondary"><%= offers.length %> offers</span>
+    </div>
+
+    <% if (offers.length === 0) { %>
+        <p class="empty-state">No resource offers have been added yet.</p>
+    <% } else { %>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle resource-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Matches</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% offers.forEach((offer) => { %>
+                        <tr>
+                            <td>
+                                <strong><%= offer.item_name %></strong>
+                                <div class="text-secondary small"><%= offer.notes || 'No notes added' %></div>
+                            </td>
+                            <td><%= offer.category %></td>
+                            <td><%= offer.quantity %></td>
+                            <td><%= offer.location %></td>
+                            <td><span class="status-pill"><%= offer.status %></span></td>
+                            <td>
+                                <%= offer.match_count %>
+                                <% if (offer.best_match_score) { %>
+                                    <span class="text-secondary small">best <%= offer.best_match_score %>%</span>
+                                <% } %>
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-outline-light btn-sm" href="/resourceOffers/<%= offer.id %>">
+                                    Details
+                                </a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>

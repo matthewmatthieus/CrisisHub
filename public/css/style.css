@@ -140,6 +140,26 @@ select{
 
 }
 
+.alert{
+
+    border:0;
+    border-radius:var(--radius-sm);
+    color:var(--text-primary);
+
+}
+
+.alert-success{
+
+    background:rgba(34,197,94,.16);
+
+}
+
+.alert-danger{
+
+    background:rgba(239,68,68,.16);
+
+}
+
 /* =========================================
    TYPOGRAPHY
 ========================================= */
@@ -169,6 +189,130 @@ h3{
 p{
 
     color:var(--text-secondary);
+
+}
+
+.form-control,
+.form-select{
+
+    background:#0f1725;
+    border:1px solid var(--border);
+    color:var(--text-primary);
+    border-radius:var(--radius-sm);
+
+}
+
+.form-control:focus,
+.form-select:focus{
+
+    background:#0f1725;
+    border-color:var(--primary);
+    color:var(--text-primary);
+    box-shadow:0 0 0 .2rem rgba(59,130,246,.18);
+
+}
+
+.form-control:disabled,
+.form-select:disabled{
+
+    background:#1f2937;
+    color:var(--text-muted);
+
+}
+
+.form-label{
+
+    color:var(--text-secondary);
+    font-weight:700;
+
+}
+
+.form-actions{
+
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    margin-top:24px;
+
+}
+
+.form-card{
+
+    max-width:860px;
+
+}
+
+.resource-table{
+
+    --bs-table-bg:transparent;
+    --bs-table-border-color:var(--border);
+    color:var(--text-primary);
+
+}
+
+.resource-table th{
+
+    color:var(--text-muted);
+    font-size:12px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+
+}
+
+.status-pill{
+
+    display:inline-flex;
+    align-items:center;
+    min-height:28px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(59,130,246,.16);
+    color:#bfdbfe;
+    font-size:13px;
+    font-weight:700;
+
+}
+
+.stat-text{
+
+    font-size:22px;
+
+}
+
+.match-list{
+
+    display:grid;
+    gap:16px;
+
+}
+
+.match-card{
+
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    padding:18px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    background:#111827;
+
+}
+
+.match-topline{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+
+}
+
+.match-actions{
+
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    flex-shrink:0;
 
 }
 
