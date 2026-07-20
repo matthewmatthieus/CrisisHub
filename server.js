@@ -7,8 +7,10 @@ const db = require('./config/db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(methodOverride('_method'));
 app.use(session({
     secret: process.env.SESSION_SECRET || 'crisishub-dev-secret',
@@ -16,10 +18,9 @@ app.use(session({
     saveUninitialized: false
 }));
 
+// View Engine
 app.set('view engine', 'ejs');
-
 app.use(expressLayouts);
-
 app.set('layout', 'layouts/main');
 
 app.use((req, res, next) => {
@@ -101,6 +102,7 @@ async function refreshMatchesForOffer(offerId) {
         }
     }
 }
+const verificationRoutes = require('./routes/verification');
 
 app.get('/', (req, res) => {
     res.render('index');
@@ -370,7 +372,7 @@ app.post('/matches/:id/reject', requireLogin, async (req, res) => {
         res.redirect('/resourceOffers');
     }
 });
-
+app.use('/verification', verificationRoutes);
 app.listen(PORT, () => {
     console.log(`CrisisHub running on http://localhost:${PORT}`);
 });
