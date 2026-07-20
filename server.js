@@ -24,11 +24,33 @@ app.use(expressLayouts);
 app.set('layout', 'layouts/main');
 
 app.use((req, res, next) => {
+    res.locals.currentPath = req.path;
     res.locals.currentUser = req.session.user || null;
     res.locals.success = req.session.success || null;
     res.locals.error = req.session.error || null;
     delete req.session.success;
     delete req.session.error;
+    next();
+});
+
+app.use(async (req, res, next) => {
+    res.locals.sidebarCounts = {
+        allReports: 8,
+        incidents: 4,
+        helpRequests: 2,
+        resourceOffers: 0,
+        verification: 3
+    };
+
+    try {
+        const [[resourceCount]] = await db.execute(
+            'SELECT COUNT(*) AS count FROM resource_offers'
+        );
+        res.locals.sidebarCounts.resourceOffers = resourceCount.count;
+    } catch (error) {
+        console.error('Unable to load sidebar counts:', error.message);
+    }
+
     next();
 });
 

@@ -6,7 +6,7 @@
             FILTER
         </div>
 
-        <a href="/" class="sidebar-link active">
+        <a href="/" class="sidebar-link <%= currentPath === '/' ? 'active' : '' %>">
 
             <div class="sidebar-left">
 
@@ -16,11 +16,11 @@
 
             </div>
 
-            <span class="sidebar-count">8</span>
+            <span class="sidebar-count"><%= sidebarCounts.allReports %></span>
 
         </a>
 
-        <a href="/incidents" class="sidebar-link">
+        <a href="/incidents" class="sidebar-link <%= currentPath.startsWith('/incidents') ? 'active' : '' %>">
 
             <div class="sidebar-left">
 
@@ -30,11 +30,11 @@
 
             </div>
 
-            <span class="sidebar-count">4</span>
+            <span class="sidebar-count"><%= sidebarCounts.incidents %></span>
 
         </a>
 
-        <a href="/helpRequests" class="sidebar-link">
+        <a href="/helpRequests" class="sidebar-link <%= currentPath.startsWith('/helpRequests') ? 'active' : '' %>">
 
             <div class="sidebar-left">
 
@@ -44,11 +44,11 @@
 
             </div>
 
-            <span class="sidebar-count">2</span>
+            <span class="sidebar-count"><%= sidebarCounts.helpRequests %></span>
 
         </a>
 
-        <a href="/resourceOffers" class="sidebar-link">
+        <a href="/resourceOffers" class="sidebar-link <%= currentPath.startsWith('/resourceOffers') ? 'active' : '' %>">
 
             <div class="sidebar-left">
 
@@ -58,7 +58,7 @@
 
             </div>
 
-            <span class="sidebar-count">6</span>
+            <span class="sidebar-count"><%= sidebarCounts.resourceOffers %></span>
 
         </a>
 
@@ -72,7 +72,7 @@
             ADMIN
         </div>
 
-        <a href="/verification" class="sidebar-link">
+        <a href="/verification" class="sidebar-link <%= currentPath.startsWith('/verification') ? 'active' : '' %>">
 
             <div class="sidebar-left">
 
@@ -82,7 +82,7 @@
 
             </div>
 
-            <span class="sidebar-count">3</span>
+            <span class="sidebar-count"><%= sidebarCounts.verification %></span>
 
         </a>
 

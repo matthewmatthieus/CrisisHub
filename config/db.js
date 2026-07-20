@@ -11,7 +11,9 @@ const config = {
     connectionLimit: 10
 };
 
-if (process.env.DB_SSL === 'true') {
+const isLocalDatabase = ['localhost', '127.0.0.1', '::1'].includes(config.host);
+
+if (process.env.DB_SSL !== 'false' || !isLocalDatabase) {
     config.ssl = {
         rejectUnauthorized: false
     };

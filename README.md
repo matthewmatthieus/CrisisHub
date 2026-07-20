@@ -28,16 +28,16 @@ The feature stores resource offers in MySQL, compares them with open help reques
 npm install
 ```
 
-2. Create a MySQL database named `crisishub`.
+2. Create or connect to the shared MySQL database named `c237_017_team2_crisishub`.
 
 3. Import the database files in this order:
 
 ```bash
-mysql -u root -p crisishub < database/schema.sql
-mysql -u root -p crisishub < database/seed.sql
+mysql -u root -p c237_017_team2_crisishub < database/schema.sql
+mysql -u root -p c237_017_team2_crisishub < database/seed.sql
 ```
 
-4. Copy `.env.example` to `.env` and update the database credentials.
+4. Copy `.env.example` to `.env` and update the database credentials. Keep `DB_SSL=true` for the shared database.
 
 5. Start the app:
 
