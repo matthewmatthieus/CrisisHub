@@ -83,21 +83,29 @@
 
                     <span class="system-status">
                         <i class="bi bi-person-check me-1"></i>
-                        <%= currentUser.name %>
+                        <%= currentUser.username || currentUser.name %>
                     </span>
 
-                    <a class="btn btn-outline-light btn-sm report-btn" href="/demo/logout">
+                    <a class="btn btn-outline-light btn-sm report-btn" href="/profile">
+                        Profile
+                    </a>
+
+                    <a class="btn btn-outline-light btn-sm report-btn" href="/auth/logout">
                         Logout
                     </a>
 
                 <% } else { %>
 
-                    <a class="btn btn-primary btn-sm report-btn" href="/demo/member3-login">
+                    <a class="btn btn-primary btn-sm report-btn" href="/auth/login">
 
                         <i class="bi bi-person-check me-1"></i>
 
-                        Demo Login
+                        Login
 
+                    </a>
+
+                    <a class="btn btn-outline-light btn-sm report-btn" href="/auth/register">
+                        Register
                     </a>
 
                 <% } %>

@@ -1,0 +1,68 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h3 class="fw-bold mb-1">Create Account</h3>
+                    <p class="text-muted mb-4">Register to start reporting and supporting your community.</p>
+
+                    <% if (errors.general) { %>
+                        <div class="alert alert-danger"><%= errors.general %></div>
+                    <% } %>
+
+                    <form method="POST" action="/auth/register" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label" for="username">Username</label>
+                            <input type="text"
+                                   id="username"
+                                   name="username"
+                                   class="form-control <%= errors.username ? 'is-invalid' : '' %>"
+                                   value="<%= formData.username || '' %>"
+                                   required>
+                            <div class="invalid-feedback"><%= errors.username || '' %></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email"
+                                   id="email"
+                                   name="email"
+                                   class="form-control <%= errors.email ? 'is-invalid' : '' %>"
+                                   value="<%= formData.email || '' %>"
+                                   required>
+                            <div class="invalid-feedback"><%= errors.email || '' %></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="password">Password</label>
+                            <input type="password"
+                                   id="password"
+                                   name="password"
+                                   class="form-control <%= errors.password ? 'is-invalid' : '' %>"
+                                   required>
+                            <div class="form-text">Minimum 8 characters with uppercase, lowercase, number and special character.</div>
+                            <div class="invalid-feedback"><%= errors.password || '' %></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="confirmPassword">Confirm Password</label>
+                            <input type="password"
+                                   id="confirmPassword"
+                                   name="confirmPassword"
+                                   class="form-control <%= errors.confirmPassword ? 'is-invalid' : '' %>"
+                                   required>
+                            <div class="invalid-feedback"><%= errors.confirmPassword || '' %></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+
+                    <p class="text-muted mt-4 mb-0 text-center">
+                        Already have an account?
+                        <a href="/auth/login" class="fw-semibold">Login</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

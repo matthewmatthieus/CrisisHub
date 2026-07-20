@@ -1,0 +1,65 @@
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="mb-0">My Profile</h2>
+        <a href="/profile/edit" class="btn btn-primary">Edit Profile</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <% if (user && user.profile_picture) { %>
+                            <img src="/uploads/profiles/<%= user.profile_picture %>" alt="Profile" class="rounded-circle" width="72" height="72">
+                        <% } else { %>
+                            <div class="rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+                                <i class="bi bi-person fs-3 text-secondary"></i>
+                            </div>
+                        <% } %>
+
+                        <div>
+                            <h5 class="mb-1"><%= user ? user.username : 'N/A' %></h5>
+                            <span class="badge text-bg-dark"><%= user ? user.role : 'User' %></span>
+                        </div>
+                    </div>
+
+                    <p class="mb-2"><strong>Email:</strong> <%= user ? user.email : 'N/A' %></p>
+                    <p class="mb-2"><strong>Status:</strong> <span class="badge text-bg-success"><%= user ? user.status : 'Active' %></span></p>
+                    <p class="mb-0"><strong>Reputation Score:</strong> <span class="badge text-bg-primary"><%= reputation %></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Profile Details</h5>
+                    <p class="mb-2"><strong>Full Name:</strong> <%= profile && profile.full_name ? profile.full_name : '-' %></p>
+                    <p class="mb-2"><strong>Phone:</strong> <%= profile && profile.phone ? profile.phone : '-' %></p>
+                    <p class="mb-2"><strong>Address:</strong> <%= profile && profile.address ? profile.address : '-' %></p>
+                    <p class="mb-0"><strong>Bio:</strong> <%= profile && profile.bio ? profile.bio : '-' %></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Activity</h5>
+                    <% if (!activity || activity.length === 0) { %>
+                        <div class="alert alert-secondary mb-0">No activity found yet.</div>
+                    <% } else { %>
+                        <ul class="list-group list-group-flush">
+                            <% activity.forEach((item) => { %>
+                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                    <span><%= item.activity %></span>
+                                    <small class="text-muted"><%= new Date(item.created_at).toLocaleString() %></small>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

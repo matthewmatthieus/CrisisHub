@@ -2,7 +2,13 @@ const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const methodOverride = require('method-override');
+const fileUpload = require('express-fileupload');
 const db = require('./config/db');
+const verificationRoutes = require('./routes/verification');
+const authRoutes = require('./routes/authRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const authController = require('./controllers/authController');
+const { isAuthenticated } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +18,13 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(methodOverride('_method'));
+app.use(fileUpload({
+    createParentPath: true,
+    abortOnLimit: true,
+    limits: {
+        fileSize: 2 * 1024 * 1024
+    }
+}));
 app.use(session({
     secret: process.env.SESSION_SECRET || 'crisishub-dev-secret',
     resave: false,
@@ -28,8 +41,10 @@ app.use((req, res, next) => {
     res.locals.currentUser = req.session.user || null;
     res.locals.success = req.session.success || null;
     res.locals.error = req.session.error || null;
+    res.locals.warning = req.session.warning || null;
     delete req.session.success;
     delete req.session.error;
+    delete req.session.warning;
     next();
 });
 
@@ -124,11 +139,13 @@ async function refreshMatchesForOffer(offerId) {
         }
     }
 }
-const verificationRoutes = require('./routes/verification');
-
 app.get('/', (req, res) => {
     res.render('index');
 });
+
+app.get('/dashboard', isAuthenticated, authController.showDashboard);
+app.use('/auth', authRoutes);
+app.use('/profile', profileRoutes);
 
 app.get('/demo/member3-login', (req, res) => {
     req.session.user = {

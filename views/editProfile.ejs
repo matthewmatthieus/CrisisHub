@@ -1,0 +1,77 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="mb-3">Edit Profile</h3>
+
+                    <form method="POST" action="/profile/edit" enctype="multipart/form-data" novalidate>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="full_name">Full Name</label>
+                                <input type="text"
+                                       id="full_name"
+                                       name="full_name"
+                                       class="form-control <%= errors.full_name ? 'is-invalid' : '' %>"
+                                       value="<%= formData.full_name || '' %>">
+                                <div class="invalid-feedback"><%= errors.full_name || '' %></div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="phone">Phone</label>
+                                <input type="text"
+                                       id="phone"
+                                       name="phone"
+                                       class="form-control <%= errors.phone ? 'is-invalid' : '' %>"
+                                       value="<%= formData.phone || '' %>">
+                                <div class="invalid-feedback"><%= errors.phone || '' %></div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label" for="address">Address</label>
+                                <input type="text"
+                                       id="address"
+                                       name="address"
+                                       class="form-control <%= errors.address ? 'is-invalid' : '' %>"
+                                       value="<%= formData.address || '' %>">
+                                <div class="invalid-feedback"><%= errors.address || '' %></div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label" for="bio">Bio</label>
+                                <textarea id="bio"
+                                          name="bio"
+                                          rows="4"
+                                          class="form-control <%= errors.bio ? 'is-invalid' : '' %>"><%= formData.bio || '' %></textarea>
+                                <div class="invalid-feedback"><%= errors.bio || '' %></div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="profile_picture">Upload Profile Picture</label>
+                                <input type="file"
+                                       id="profile_picture"
+                                       name="profile_picture"
+                                       class="form-control <%= errors.profile_picture ? 'is-invalid' : '' %>">
+                                <div class="invalid-feedback"><%= errors.profile_picture || '' %></div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="profile_picture_filename">Or Enter Picture Filename</label>
+                                <input type="text"
+                                       id="profile_picture_filename"
+                                       name="profile_picture_filename"
+                                       class="form-control"
+                                       value="<%= formData.profile_picture_filename || '' %>">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a href="/profile" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
