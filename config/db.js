@@ -8,12 +8,13 @@ const config = {
     database: process.env.DB_NAME,
     port: Number(process.env.DB_PORT) || 3306,
     waitForConnections: true,
-    connectionLimit: 10
+    connectionLimit: 10,
+    ssl: {
+        rejectUnauthorized: true
+    }
 };
 
-const isLocalDatabase = ['localhost', '127.0.0.1', '::1'].includes(config.host);
-
-if (process.env.DB_SSL !== 'false' || !isLocalDatabase) {
+if (process.env.DB_SSL === 'true') {
     config.ssl = {
         rejectUnauthorized: false
     };

@@ -133,7 +133,7 @@ app.get('/', (req, res) => {
 app.get('/demo/member3-login', (req, res) => {
     req.session.user = {
         id: 1,
-        name: 'Hariharan Thiagarajan',
+        name: 'Guest',
         role: 'user'
     };
     req.session.success = 'Demo login active for Member 3 resource offer testing.';
