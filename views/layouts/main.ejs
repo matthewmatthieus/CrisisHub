@@ -32,6 +32,18 @@
 
         <main class="main-content">
 
+            <% if (success) { %>
+                <div class="alert alert-success"><%= success %></div>
+            <% } %>
+
+            <% if (error) { %>
+                <div class="alert alert-danger"><%= error %></div>
+            <% } %>
+
+            <% if (warning) { %>
+                <div class="alert alert-warning"><%= warning %></div>
+            <% } %>
+
             <%- body %>
 
         </main>
