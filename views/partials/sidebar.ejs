@@ -3,7 +3,7 @@
     <div class="sidebar-section">
 
         <div class="sidebar-title">
-            FILTER
+            Community
         </div>
 
         <a href="/" class="sidebar-link <%= currentPath === '/' ? 'active' : '' %>">
@@ -62,6 +62,20 @@
 
         </a>
 
+                <a href="/verification" class="sidebar-link <%= currentPath.startsWith('/verification') ? 'active' : '' %>">
+
+            <div class="sidebar-left">
+
+                <i class="bi bi-patch-check-fill text-info"></i>
+
+                <span>Verify Incidents</span>
+
+            </div>
+
+            <span class="sidebar-count"><%= sidebarCounts.verification %></span>
+
+        </a>
+
     </div>
 
     <div class="sidebar-divider"></div>
@@ -72,19 +86,6 @@
             ADMIN
         </div>
 
-        <a href="/verification" class="sidebar-link <%= currentPath.startsWith('/verification') ? 'active' : '' %>">
-
-            <div class="sidebar-left">
-
-                <i class="bi bi-patch-check-fill text-info"></i>
-
-                <span>Verification</span>
-
-            </div>
-
-            <span class="sidebar-count"><%= sidebarCounts.verification %></span>
-
-        </a>
 
     </div>
 
