@@ -79,13 +79,28 @@
 
                 </span>
 
-                <button class="btn btn-primary btn-sm report-btn">
+                <% if (currentUser) { %>
 
-                    <i class="bi bi-plus-circle me-1"></i>
+                    <span class="system-status">
+                        <i class="bi bi-person-check me-1"></i>
+                        <%= currentUser.name %>
+                    </span>
 
-                    Report
+                    <a class="btn btn-outline-light btn-sm report-btn" href="/demo/logout">
+                        Logout
+                    </a>
 
-                </button>
+                <% } else { %>
+
+                    <a class="btn btn-primary btn-sm report-btn" href="/demo/member3-login">
+
+                        <i class="bi bi-person-check me-1"></i>
+
+                        Demo Login
+
+                    </a>
+
+                <% } %>
 
             </div>
 

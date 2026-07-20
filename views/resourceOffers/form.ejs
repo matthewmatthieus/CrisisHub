@@ -1,0 +1,73 @@
+<div class="page-header">
+    <div>
+        <h1><%= pageTitle %></h1>
+        <p>Record the resource type, quantity, and location so CrisisHub can find suitable requests.</p>
+    </div>
+</div>
+
+<% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="content-card form-card">
+    <form action="<%= formAction %>" method="POST">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="item_name">Item Name</label>
+                <input class="form-control" id="item_name" name="item_name" type="text"
+                       value="<%= offer ? offer.item_name : '' %>" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="category">Category</label>
+                <select class="form-select" id="category" name="category" required>
+                    <% ['Water', 'Food', 'Medical', 'Shelter', 'Transport', 'Other'].forEach((category) => { %>
+                        <option value="<%= category %>" <%= offer && offer.category === category ? 'selected' : '' %>>
+                            <%= category %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" for="quantity">Quantity</label>
+                <input class="form-control" id="quantity" name="quantity" type="number" min="1"
+                       value="<%= offer ? offer.quantity : '' %>" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" for="location">Location</label>
+                <input class="form-control" id="location" name="location" type="text"
+                       value="<%= offer ? offer.location : '' %>" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" for="status">Status</label>
+                <select class="form-select" id="status" name="status" <%= offer ? '' : 'disabled' %>>
+                    <% ['Available', 'Matched', 'Fulfilled', 'Unavailable'].forEach((status) => { %>
+                        <option value="<%= status %>" <%= offer && offer.status === status ? 'selected' : '' %>>
+                            <%= status %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="notes">Notes</label>
+                <textarea class="form-control" id="notes" name="notes" rows="4"><%= offer ? offer.notes || '' : '' %></textarea>
+            </div>
+        </div>
+
+        <% if (!offer) { %>
+            <input type="hidden" name="status" value="Available">
+        <% } %>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="/resourceOffers">Cancel</a>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-check-circle me-1"></i>
+                Save Offer
+            </button>
+        </div>
+    </form>
+</div>
