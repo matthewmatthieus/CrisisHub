@@ -5,7 +5,8 @@ const db = require('../config/db');
  */
 async function findByEmail(email) {
     const [rows] = await db.execute(
-        `SELECT user_id, username, email, password, role, status, reputation_score, profile_picture, created_at, updated_at
+        `SELECT id, username, email, password, role, status,
+                reputation_score, profile_picture, created_at, updated_at
          FROM users
          WHERE email = ?
          LIMIT 1`,
@@ -20,7 +21,8 @@ async function findByEmail(email) {
  */
 async function findByUsername(username) {
     const [rows] = await db.execute(
-        `SELECT user_id, username, email, password, role, status, reputation_score, profile_picture, created_at, updated_at
+        `SELECT id, username, email, password, role, status,
+                reputation_score, profile_picture, created_at, updated_at
          FROM users
          WHERE username = ?
          LIMIT 1`,
@@ -35,9 +37,10 @@ async function findByUsername(username) {
  */
 async function findById(userId) {
     const [rows] = await db.execute(
-        `SELECT user_id, username, email, role, status, reputation_score, profile_picture, created_at, updated_at
+        `SELECT id, username, email, role, status,
+                reputation_score, profile_picture, created_at, updated_at
          FROM users
-         WHERE user_id = ?
+         WHERE id = ?
          LIMIT 1`,
         [userId]
     );
@@ -48,9 +51,16 @@ async function findById(userId) {
 /**
  * Creates a user account with hashed password.
  */
-async function createUser({ username, email, passwordHash, role = 'User', status = 'Active' }) {
+async function createUser({
+    username,
+    email,
+    passwordHash,
+    role = 'user',
+    status = 'Active'
+}) {
     const [result] = await db.execute(
-        `INSERT INTO users (username, email, password, role, status, reputation_score)
+        `INSERT INTO users
+            (username, email, password, role, status, reputation_score)
          VALUES (?, ?, ?, ?, ?, 50)`,
         [username, email, passwordHash, role, status]
     );
@@ -65,7 +75,7 @@ async function updateProfilePicture(userId, filename) {
     await db.execute(
         `UPDATE users
          SET profile_picture = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE user_id = ?`,
+         WHERE id = ?`,
         [filename, userId]
     );
 }
@@ -78,7 +88,7 @@ async function updateReputation(userId, delta) {
         `UPDATE users
          SET reputation_score = LEAST(100, GREATEST(0, reputation_score + ?)),
              updated_at = CURRENT_TIMESTAMP
-         WHERE user_id = ?`,
+         WHERE id = ?`,
         [delta, userId]
     );
 
@@ -106,7 +116,7 @@ async function getReputation(userId) {
     const [rows] = await db.execute(
         `SELECT reputation_score
          FROM users
-         WHERE user_id = ?
+         WHERE id = ?
          LIMIT 1`,
         [userId]
     );

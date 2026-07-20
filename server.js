@@ -71,8 +71,8 @@ app.use(async (req, res, next) => {
 
 function requireLogin(req, res, next) {
     if (!req.session.user) {
-        req.session.error = 'Please use the demo login before managing resource offers.';
-        return res.redirect('/');
+        req.session.error = 'Please login or register to access this page.';
+        return res.redirect('/login');
     }
 
     next();
@@ -197,7 +197,7 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
     try {
         const [result] = await db.execute(
             `INSERT INTO resource_offers
-                (user_id, category, item_name, quantity, location, notes, status)
+                (id, category, item_name, quantity, location, notes, status)
              VALUES (?, ?, ?, ?, ?, ?, 'Available')`,
             [req.session.user.id, category, item_name, quantity, location, notes || null]
         );
@@ -249,7 +249,7 @@ app.get('/resourceOffers/:id', requireLogin, async (req, res) => {
         res.render('resourceOffers/show', {
             offer,
             matches,
-            isOwner: offer.user_id === req.session.user.id
+            isOwner: offer.userid === req.session.user.id
         });
     } catch (error) {
         console.error(error);

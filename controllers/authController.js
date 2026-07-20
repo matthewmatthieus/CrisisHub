@@ -140,14 +140,14 @@ async function login(req, res) {
         }
 
         req.session.user = {
-            user_id: user.user_id,
+            user_id: user.id,
             username: user.username,
             role: user.role,
-            id: user.user_id,
+            id: user.id,
             name: user.username
         };
 
-        await activityModel.logActivity(user.user_id, 'Logged in');
+        await activityModel.logActivity(user.id, 'Logged in');
         req.session.success = 'Login successful.';
         return res.redirect('/dashboard');
     } catch (error) {
