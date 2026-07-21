@@ -3,6 +3,8 @@ const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const methodOverride = require('method-override');
 const fileUpload = require('express-fileupload');
+const path = require('path');
+const fs = require('fs/promises');
 const db = require('./config/db');
 const verificationRoutes = require('./routes/verification');
 const authRoutes = require('./routes/authRoutes');
@@ -13,6 +15,14 @@ const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const resourceUploadDir = path.join(__dirname, 'public', 'uploads', 'resources');
+const allowedResourceImageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
+const allowedResourceImageMimeTypes = new Set([
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp'
+]);
 
 // Middleware
 app.use(express.static('public'));
@@ -83,6 +93,76 @@ app.use(async (req, res, next) => {
 
 function requireLogin(req, res, next) {
     return isAuthenticated(req, res, next);
+}
+
+function canManageOffer(offer, req) {
+    if (!offer || !req.session.user) {
+        return false;
+    }
+
+    return offer.user_id === req.session.user.id || req.session.user.role === 'admin';
+}
+
+async function ensureResourceOfferImageColumn() {
+    const [columns] = await db.execute(
+        `SHOW COLUMNS FROM resource_offers LIKE 'image_filename'`
+    );
+
+    if (columns.length === 0) {
+        await db.execute(
+            `ALTER TABLE resource_offers
+             ADD COLUMN image_filename VARCHAR(255) NULL AFTER notes`
+        );
+    }
+}
+
+function getResourceImageUpload(req) {
+    const upload = req.files && req.files.image;
+
+    if (!upload) {
+        return null;
+    }
+
+    return Array.isArray(upload) ? upload[0] : upload;
+}
+
+async function saveResourceOfferImage(req) {
+    const upload = getResourceImageUpload(req);
+
+    if (!upload || !upload.name) {
+        return null;
+    }
+
+    const extension = path.extname(upload.name).toLowerCase();
+
+    if (!allowedResourceImageExtensions.has(extension)
+        || !allowedResourceImageMimeTypes.has(upload.mimetype)) {
+        throw new Error('Only PNG, JPG, JPEG, GIF and WEBP resource images are allowed.');
+    }
+
+    await fs.mkdir(resourceUploadDir, { recursive: true });
+
+    const safeBaseName = path.basename(upload.name, extension)
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .slice(0, 60) || 'resource';
+    const filename = `${Date.now()}_${safeBaseName}${extension}`;
+
+    await upload.mv(path.join(resourceUploadDir, filename));
+    return filename;
+}
+
+async function removeResourceOfferImage(filename) {
+    if (!filename) {
+        return;
+    }
+
+    try {
+        await fs.unlink(path.join(resourceUploadDir, filename));
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.error('Unable to remove resource image:', error.message);
+        }
+    }
 }
 
 function calculateMatchScore(offer, request) {
@@ -559,7 +639,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
                  ORDER BY created_at DESC`
             ),
             db.execute(
-                `SELECT id, item_name, category, quantity, location, status
+                `SELECT id, item_name, category, quantity, location, status, image_filename
                  FROM resource_offers
                  ORDER BY created_at DESC`
             )
@@ -598,6 +678,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             status: offer.status,
             category: offer.category,
             quantity: offer.quantity,
+            imageUrl: offer.image_filename ? `/uploads/resources/${offer.image_filename}` : null,
             ...await resolveSingaporeLocation(offer.location)
         })));
 
@@ -689,6 +770,7 @@ app.get('/resourceOffers/new', requireLogin, (req, res) => {
 
 app.post('/resourceOffers', requireLogin, async (req, res) => {
     const { category, item_name, quantity, location, notes } = req.body;
+    let imageFilename = null;
 
     if (!location || !location.trim()) {
         req.session.error = 'Please select or enter a valid location.';
@@ -696,11 +778,21 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
     }
 
     try {
+        imageFilename = await saveResourceOfferImage(req);
+
         const [result] = await db.execute(
             `INSERT INTO resource_offers
-                (user_id, category, item_name, quantity, location, notes, status)
-             VALUES (?, ?, ?, ?, ?, ?, 'Available')`,
-            [req.session.user.id, category, item_name, quantity, location.trim(), notes || null]
+                (user_id, category, item_name, quantity, location, notes, image_filename, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Available')`,
+            [
+                req.session.user.id,
+                category,
+                item_name,
+                quantity,
+                location.trim(),
+                notes || null,
+                imageFilename
+            ]
         );
 
         await refreshMatchesForOffer(result.insertId);
@@ -709,7 +801,10 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
         res.redirect(`/resourceOffers/${result.insertId}`);
     } catch (error) {
         console.error(error);
-        req.session.error = 'Unable to create resource offer.';
+        await removeResourceOfferImage(imageFilename);
+        req.session.error = error.message.includes('resource images')
+            ? error.message
+            : 'Unable to create resource offer.';
         res.redirect('/resourceOffers/new');
     }
 });
@@ -785,6 +880,12 @@ app.get('/resourceOffers/:id/edit', requireLogin, async (req, res) => {
 
 app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
     const { category, item_name, quantity, location, notes, status } = req.body;
+    let imageFilename = null;
+
+    if (!location || !location.trim()) {
+        req.session.error = 'Please select or enter a valid location.';
+        return res.redirect(`/resourceOffers/${req.params.id}/edit`);
+    }
 
     try {
         const [[offer]] = await db.execute(
@@ -797,11 +898,23 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
             return res.redirect('/resourceOffers');
         }
 
+        imageFilename = await saveResourceOfferImage(req);
+        const nextImageFilename = imageFilename || offer.image_filename || null;
+
         const [result] = await db.execute(
             `UPDATE resource_offers
-             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, status = ?
+             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, image_filename = ?, status = ?
              WHERE id = ?`,
-            [category, item_name, quantity, location, notes || null, status, req.params.id]
+            [
+                category,
+                item_name,
+                quantity,
+                location.trim(),
+                notes || null,
+                nextImageFilename,
+                status,
+                req.params.id
+            ]
         );
 
         if (result.affectedRows === 0) {
@@ -811,11 +924,18 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
 
         await refreshMatchesForOffer(req.params.id);
 
+        if (imageFilename && offer.image_filename) {
+            await removeResourceOfferImage(offer.image_filename);
+        }
+
         req.session.success = 'Resource offer updated.';
         res.redirect(`/resourceOffers/${req.params.id}`);
     } catch (error) {
         console.error(error);
-        req.session.error = 'Unable to update resource offer.';
+        await removeResourceOfferImage(imageFilename);
+        req.session.error = error.message.includes('resource images')
+            ? error.message
+            : 'Unable to update resource offer.';
         res.redirect(`/resourceOffers/${req.params.id}/edit`);
     }
 });
@@ -836,6 +956,10 @@ app.post('/resourceOffers/:id/delete', requireLogin, async (req, res) => {
             'DELETE FROM resource_offers WHERE id = ?',
             [req.params.id]
         );
+
+        if (result.affectedRows) {
+            await removeResourceOfferImage(offer.image_filename);
+        }
 
         req.session[result.affectedRows ? 'success' : 'error'] =
             result.affectedRows ? 'Resource offer deleted.' : 'Resource offer not found.';
@@ -936,6 +1060,16 @@ app.use('/verification', verificationRoutes);
 
 console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
-app.listen(PORT, () => {
-    console.log(`CrisisHub running on http://localhost:${PORT}`);
-});
+async function startServer() {
+    try {
+        await ensureResourceOfferImageColumn();
+    } catch (error) {
+        console.error('Unable to prepare resource offer image column:', error.message);
+    }
+
+    app.listen(PORT, () => {
+        console.log(`CrisisHub running on http://localhost:${PORT}`);
+    });
+}
+
+startServer();

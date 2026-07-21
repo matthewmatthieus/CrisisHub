@@ -10,7 +10,7 @@
 <% } %>
 
 <div class="content-card form-card">
-    <form action="<%= formAction %>" method="POST">
+    <form action="<%= formAction %>" method="POST" enctype="multipart/form-data">
         <div class="row g-3">
             <div class="col-md-6">
                 <label class="form-label" for="item_name">Item Name</label>
@@ -59,6 +59,19 @@
             <div class="col-12">
                 <label class="form-label" for="notes">Notes</label>
                 <textarea class="form-control" id="notes" name="notes" rows="4"><%= offer ? offer.notes || '' : '' %></textarea>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="image">Resource Image</label>
+                <input class="form-control" id="image" name="image" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+                <div class="form-text text-secondary">Upload PNG, JPG, GIF or WEBP up to 2MB.</div>
+
+                <% if (offer && offer.image_filename) { %>
+                    <div class="resource-image-current">
+                        <img src="/uploads/resources/<%= offer.image_filename %>" alt="<%= offer.item_name %> image">
+                        <span>Current image will be kept if no replacement is selected.</span>
+                    </div>
+                <% } %>
             </div>
         </div>
 
