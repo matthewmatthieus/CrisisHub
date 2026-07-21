@@ -1104,6 +1104,33 @@ p{
 
 }
 
+.map-reset-button{
+
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    min-height:38px;
+    padding:7px 12px;
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:var(--text-secondary);
+    font-size:12px;
+    font-weight:800;
+    transition:var(--transition);
+
+}
+
+.map-reset-button:hover,
+.map-reset-button:focus-visible{
+
+    border-color:#4b8cff;
+    color:var(--text-primary);
+    background:rgba(59,130,246,.12);
+    outline:none;
+
+}
+
 .map-filter:hover,
 .map-filter.is-active{
 
