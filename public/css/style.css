@@ -2016,6 +2016,46 @@ p{
 
 }
 
+.empty-feature-card{
+
+    display:flex;
+    min-height:300px;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    text-align:center;
+
+}
+
+.empty-feature-icon{
+
+    display:grid;
+    width:58px;
+    height:58px;
+    place-items:center;
+    border:1px solid var(--border-light);
+    border-radius:12px;
+    background:rgba(255,255,255,.04);
+    font-size:26px;
+
+}
+
+.empty-feature-card h2{
+
+    margin:0;
+    font-size:24px;
+
+}
+
+.empty-feature-card p{
+
+    max-width:520px;
+    margin:0;
+    color:var(--text-muted);
+
+}
+
 @media (prefers-reduced-motion:reduce){
 
     .dashboard-reports-panel,

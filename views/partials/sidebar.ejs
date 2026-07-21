@@ -20,7 +20,7 @@
 
         </a>
 
-        <a href="/?map=incident" class="sidebar-link <%= currentPath === '/' && currentMapType === 'incident' ? 'active' : '' %>">
+        <a href="/incidents" class="sidebar-link <%= currentPath.startsWith('/incidents') ? 'active' : '' %>">
 
             <div class="sidebar-left">
 
@@ -34,7 +34,7 @@
 
         </a>
 
-        <a href="/?map=help-request" class="sidebar-link <%= currentPath === '/' && currentMapType === 'help-request' ? 'active' : '' %>">
+        <a href="/helpRequests" class="sidebar-link <%= currentPath.startsWith('/helpRequests') ? 'active' : '' %>">
 
             <div class="sidebar-left">
 
@@ -48,7 +48,7 @@
 
         </a>
 
-        <a href="/resourceOffers" class="sidebar-link <%= currentPath.startsWith('/resourceOffers') || currentMapType === 'resource' ? 'active' : '' %>">
+        <a href="/resourceOffers" class="sidebar-link <%= currentPath.startsWith('/resourceOffers') ? 'active' : '' %>">
 
             <div class="sidebar-left">
 

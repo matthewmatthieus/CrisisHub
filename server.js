@@ -278,6 +278,26 @@ app.get('/', isAuthenticated, authController.showDashboard);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 
+app.get('/incidents', isAuthenticated, (req, res) => {
+    res.render('emptyFeature', {
+        pageTitle: 'Incidents',
+        pageDescription: 'Incident reporting has not been implemented by the assigned member yet.',
+        iconClass: 'bi bi-exclamation-triangle-fill text-warning',
+        emptyTitle: 'No incident page yet',
+        emptyMessage: 'This section is intentionally empty until the incidents feature is completed.'
+    });
+});
+
+app.get('/helpRequests', isAuthenticated, (req, res) => {
+    res.render('emptyFeature', {
+        pageTitle: 'Help Requests',
+        pageDescription: 'Help request reporting has not been implemented by the assigned member yet.',
+        iconClass: 'bi bi-life-preserver text-danger',
+        emptyTitle: 'No help request page yet',
+        emptyMessage: 'This section is intentionally empty until the help request feature is completed.'
+    });
+});
+
 app.get('/api/map-items', isAuthenticated, async (req, res) => {
     try {
         const [helpRequestsResult, resourceOffersResult] = await Promise.all([
