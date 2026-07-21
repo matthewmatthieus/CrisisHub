@@ -63,7 +63,7 @@ async function register(req, res) {
             username,
             email,
             passwordHash,
-            role: 'User',
+            role: 'user',
             status: 'Active'
         });
 
@@ -73,7 +73,7 @@ async function register(req, res) {
         req.session.user = {
             user_id: userId,
             username,
-            role: 'User',
+            role: 'user',
             id: userId,
             name: username
         };

@@ -1,0 +1,75 @@
+<div class="page-header">
+    <div>
+        <h1><%= pageTitle %></h1>
+        <p>Record incident details so CrisisHub can track and respond to urgent events.</p>
+    </div>
+</div>
+
+<% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="content-card form-card">
+    <form action="<%= formAction %>" method="POST">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="title">Title</label>
+                <input class="form-control" id="title" name="title" type="text"
+                       value="<%= incident ? incident.title : '' %>" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="category">Category</label>
+                <select class="form-select" id="category" name="category" required>
+                    <% ['Infrastructure', 'Medical', 'Safety', 'Environmental', 'Other'].forEach((category) => { %>
+                        <option value="<%= category %>" <%= incident && incident.category === category ? 'selected' : '' %>>
+                            <%= category %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="severity">Severity</label>
+                <select class="form-select" id="severity" name="severity" required>
+                    <% ['Low', 'Medium', 'High', 'Critical'].forEach((severity) => { %>
+                        <option value="<%= severity %>" <%= incident && incident.severity === severity ? 'selected' : '' %>>
+                            <%= severity %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="status">Status</label>
+                <select class="form-select" id="status" name="status" required>
+                    <% ['Reported', 'Verified', 'In Progress', 'Resolved', 'Closed'].forEach((status) => { %>
+                        <option value="<%= status %>" <%= incident && incident.status === status ? 'selected' : '' %>>
+                            <%= status %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="location">Location</label>
+                <input class="form-control" id="location" name="location" type="text"
+                       value="<%= incident ? incident.location : '' %>"
+                       required>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4"><%= incident ? incident.description || '' : '' %></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="/incidents">Cancel</a>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-check-circle me-1"></i>
+                Save Incident
+            </button>
+        </div>
+    </form>
+</div>

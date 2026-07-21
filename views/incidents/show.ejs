@@ -1,0 +1,47 @@
+<div class="page-header">
+    <div>
+        <h1><%= incident.title %></h1>
+        <p><%= incident.category %> incident at <%= incident.location %>.</p>
+    </div>
+
+    <% if (isAdmin) { %>
+        <div class="page-actions">
+            <a class="btn btn-outline-light" href="/incidents/<%= incident.id %>/edit">
+                <i class="bi bi-pencil-square me-1"></i>
+                Edit
+            </a>
+            <form action="/incidents/<%= incident.id %>/delete" method="POST">
+                <button class="btn btn-danger" type="submit">
+                    <i class="bi bi-trash me-1"></i>
+                    Delete
+                </button>
+            </form>
+        </div>
+    <% } %>
+</div>
+
+<div class="dashboard-grid mb-4">
+    <div class="stat-card">
+        <p class="stat-label">Severity</p>
+        <div class="stat-number"><%= incident.severity %></div>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Status</p>
+        <div class="stat-number"><%= incident.status %></div>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Location</p>
+        <div class="stat-number"><%= incident.location %></div>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">Reported by</p>
+        <div class="stat-number"><%= incident.owner_name || 'Unknown' %></div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h2><i class="bi bi-card-text"></i> Description</h2>
+    </div>
+    <p><%= incident.description || 'No description provided.' %></p>
+</div>

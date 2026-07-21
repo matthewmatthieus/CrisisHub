@@ -8,7 +8,7 @@ const verificationRoutes = require('./routes/verification');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const authController = require('./controllers/authController');
-const { isAuthenticated } = require('./middleware/authMiddleware');
+const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -51,9 +51,9 @@ app.use((req, res, next) => {
 
 app.use(async (req, res, next) => {
     res.locals.sidebarCounts = {
-        allReports: 8,
-        incidents: 4,
-        helpRequests: 2,
+        allReports: 0,
+        incidents: 0,
+        helpRequests: 0,
         resourceOffers: 0,
         verification: 3
     };
@@ -62,7 +62,17 @@ app.use(async (req, res, next) => {
         const [[resourceCount]] = await db.execute(
             'SELECT COUNT(*) AS count FROM resource_offers'
         );
+        const [[helpRequestCount]] = await db.execute(
+            'SELECT COUNT(*) AS count FROM help_requests'
+        );
+        const [[incidentCount]] = await db.execute(
+            'SELECT COUNT(*) AS count FROM incidents'
+        );
+
         res.locals.sidebarCounts.resourceOffers = resourceCount.count;
+        res.locals.sidebarCounts.helpRequests = helpRequestCount.count;
+        res.locals.sidebarCounts.incidents = incidentCount.count;
+        res.locals.sidebarCounts.allReports = resourceCount.count + helpRequestCount.count + incidentCount.count;
     } catch (error) {
         console.error('Unable to load sidebar counts:', error.message);
     }
@@ -71,12 +81,7 @@ app.use(async (req, res, next) => {
 });
 
 function requireLogin(req, res, next) {
-    if (!req.session.user) {
-        req.session.error = 'Please login or register to access this page.';
-        return res.redirect('/auth/login');
-    }
-
-    next();
+    return isAuthenticated(req, res, next);
 }
 
 function calculateMatchScore(offer, request) {
@@ -250,56 +255,297 @@ async function resolveSingaporeLocation(location) {
     return resolvedLocation;
 }
 
-const dashboardIncidentMarkers = [
-    {
-        id: 1,
-        title: 'Fallen Tree at Jurong West',
-        location: 'Jurong West',
-        severity: 'High',
-        status: 'Verified'
-    },
-    {
-        id: 2,
-        title: 'Streetlight Not Working',
-        location: 'Jurong West',
-        severity: 'Medium',
-        status: 'Under verification'
-    },
-    {
-        id: 3,
-        title: 'Fallen Tree Blocking Road',
-        location: 'NTU South Spine',
-        severity: 'High',
-        status: 'Verified'
-    }
-];
-
 app.get('/', isAuthenticated, authController.showDashboard);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 
-app.get('/incidents', isAuthenticated, (req, res) => {
-    res.render('emptyFeature', {
-        pageTitle: 'Incidents',
-        pageDescription: 'Incident reporting has not been implemented by the assigned member yet.',
-        iconClass: 'bi bi-exclamation-triangle-fill text-warning',
-        emptyTitle: 'No incident page yet',
-        emptyMessage: 'This section is intentionally empty until the incidents feature is completed.'
+app.get('/incidents', requireLogin, async (req, res) => {
+    try {
+        const [incidents] = await db.execute(
+            `SELECT i.*, COALESCE(u.username, u.name) AS owner_name
+             FROM incidents i
+             LEFT JOIN users u ON i.user_id = u.id
+             ORDER BY i.created_at DESC`
+        );
+
+        res.render('incidents/index', {
+            incidents,
+            isAdmin: isAdminUser(req)
+        });
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to load incidents.';
+        res.redirect('/');
+    }
+});
+
+app.get('/incidents/new', isAdmin, (req, res) => {
+    res.render('incidents/form', {
+        incident: null,
+        formAction: '/incidents',
+        pageTitle: 'Create Incident'
     });
 });
 
-app.get('/helpRequests', isAuthenticated, (req, res) => {
-    res.render('emptyFeature', {
-        pageTitle: 'Help Requests',
-        pageDescription: 'Help request reporting has not been implemented by the assigned member yet.',
-        iconClass: 'bi bi-life-preserver text-danger',
-        emptyTitle: 'No help request page yet',
-        emptyMessage: 'This section is intentionally empty until the help request feature is completed.'
+app.post('/incidents', isAdmin, async (req, res) => {
+    const { title, category, location, severity, status, description } = req.body;
+
+    try {
+        await db.execute(
+            `INSERT INTO incidents
+                (user_id, title, category, description, location, severity, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [req.session.user.id, title, category, description || null, location, severity, status]
+        );
+
+        req.session.success = 'Incident created successfully.';
+        res.redirect('/incidents');
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to create incident.';
+        res.redirect('/incidents/new');
+    }
+});
+
+app.get('/incidents/:id', requireLogin, async (req, res) => {
+    try {
+        const [[incident]] = await db.execute(
+            `SELECT i.*, COALESCE(u.username, u.name) AS owner_name
+             FROM incidents i
+             LEFT JOIN users u ON i.user_id = u.id
+             WHERE i.id = ?`,
+            [req.params.id]
+        );
+
+        if (!incident) {
+            req.session.error = 'Incident not found.';
+            return res.redirect('/incidents');
+        }
+
+        res.render('incidents/show', {
+            incident,
+            isAdmin: isAdminUser(req)
+        });
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to load incident details.';
+        res.redirect('/incidents');
+    }
+});
+
+app.get('/incidents/:id/edit', isAdmin, async (req, res) => {
+    try {
+        const [[incident]] = await db.execute(
+            'SELECT * FROM incidents WHERE id = ?',
+            [req.params.id]
+        );
+
+        if (!incident) {
+            req.session.error = 'Incident not found.';
+            return res.redirect('/incidents');
+        }
+
+        res.render('incidents/form', {
+            incident,
+            formAction: `/incidents/${incident.id}/update`,
+            pageTitle: 'Edit Incident'
+        });
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to load incident edit form.';
+        res.redirect('/incidents');
+    }
+});
+
+app.post('/incidents/:id/update', isAdmin, async (req, res) => {
+    const { title, category, location, severity, status, description } = req.body;
+
+    try {
+        const [result] = await db.execute(
+            `UPDATE incidents
+             SET title = ?, category = ?, description = ?, location = ?, severity = ?, status = ?
+             WHERE id = ?`,
+            [title, category, description || null, location, severity, status, req.params.id]
+        );
+
+        if (result.affectedRows === 0) {
+            req.session.error = 'Unable to update incident.';
+            return res.redirect(`/incidents/${req.params.id}/edit`);
+        }
+
+        req.session.success = 'Incident updated successfully.';
+        res.redirect(`/incidents/${req.params.id}`);
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to update incident.';
+        res.redirect(`/incidents/${req.params.id}/edit`);
+    }
+});
+
+app.post('/incidents/:id/delete', isAdmin, async (req, res) => {
+    try {
+        const [result] = await db.execute(
+            'DELETE FROM incidents WHERE id = ?',
+            [req.params.id]
+        );
+
+        req.session[result.affectedRows ? 'success' : 'error'] =
+            result.affectedRows ? 'Incident deleted successfully.' : 'Incident not found.';
+        res.redirect('/incidents');
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to delete incident.';
+        res.redirect('/incidents');
+    }
+});
+
+app.get('/helpRequests', requireLogin, async (req, res) => {
+    try {
+        const [requests] = await db.execute(
+            `SELECT hr.*, COALESCE(u.username, u.name) AS requester
+             FROM help_requests hr
+             LEFT JOIN users u ON hr.user_id = u.id
+             ORDER BY hr.created_at DESC`
+        );
+
+        res.render('helpRequests/index', {
+            requests,
+            isAdmin: isAdminUser(req)
+        });
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to load help requests.';
+        res.redirect('/');
+    }
+});
+
+app.get('/helpRequests/new', isAdmin, (req, res) => {
+    res.render('helpRequests/form', {
+        request: null,
+        formAction: '/helpRequests',
+        pageTitle: 'Create Help Request'
     });
+});
+
+app.post('/helpRequests', isAdmin, async (req, res) => {
+    const { title, category, quantity_needed, location, urgency, status } = req.body;
+
+    try {
+        await db.execute(
+            `INSERT INTO help_requests
+                (user_id, title, category, quantity_needed, location, urgency, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [req.session.user.id, title, category, quantity_needed, location, urgency, status]
+        );
+
+        req.session.success = 'Help request created successfully.';
+        res.redirect('/helpRequests');
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to create help request.';
+        res.redirect('/helpRequests/new');
+    }
+});
+
+app.get('/helpRequests/:id', requireLogin, async (req, res) => {
+    try {
+        const [[request]] = await db.execute(
+            `SELECT hr.*, COALESCE(u.username, u.name) AS requester
+             FROM help_requests hr
+             LEFT JOIN users u ON hr.user_id = u.id
+             WHERE hr.id = ?`,
+            [req.params.id]
+        );
+
+        if (!request) {
+            req.session.error = 'Help request not found.';
+            return res.redirect('/helpRequests');
+        }
+
+        res.render('helpRequests/show', {
+            request,
+            isAdmin: isAdminUser(req)
+        });
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to load help request details.';
+        res.redirect('/helpRequests');
+    }
+});
+
+app.get('/helpRequests/:id/edit', isAdmin, async (req, res) => {
+    try {
+        const [[request]] = await db.execute(
+            'SELECT * FROM help_requests WHERE id = ?',
+            [req.params.id]
+        );
+
+        if (!request) {
+            req.session.error = 'Help request not found.';
+            return res.redirect('/helpRequests');
+        }
+
+        res.render('helpRequests/form', {
+            request,
+            formAction: `/helpRequests/${request.id}/update`,
+            pageTitle: 'Edit Help Request'
+        });
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to load help request edit form.';
+        res.redirect('/helpRequests');
+    }
+});
+
+app.post('/helpRequests/:id/update', isAdmin, async (req, res) => {
+    const { title, category, quantity_needed, location, urgency, status } = req.body;
+
+    try {
+        const [result] = await db.execute(
+            `UPDATE help_requests
+             SET title = ?, category = ?, quantity_needed = ?, location = ?, urgency = ?, status = ?
+             WHERE id = ?`,
+            [title, category, quantity_needed, location, urgency, status, req.params.id]
+        );
+
+        if (result.affectedRows === 0) {
+            req.session.error = 'Unable to update help request.';
+            return res.redirect(`/helpRequests/${req.params.id}/edit`);
+        }
+
+        req.session.success = 'Help request updated successfully.';
+        res.redirect(`/helpRequests/${req.params.id}`);
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to update help request.';
+        res.redirect(`/helpRequests/${req.params.id}/edit`);
+    }
+});
+
+app.post('/helpRequests/:id/delete', isAdmin, async (req, res) => {
+    try {
+        const [result] = await db.execute(
+            'DELETE FROM help_requests WHERE id = ?',
+            [req.params.id]
+        );
+
+        req.session[result.affectedRows ? 'success' : 'error'] =
+            result.affectedRows ? 'Help request deleted successfully.' : 'Help request not found.';
+        res.redirect('/helpRequests');
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to delete help request.';
+        res.redirect('/helpRequests');
+    }
 });
 
 app.get('/api/map-items', isAuthenticated, async (req, res) => {
     try {
+        const [incidentResults] = await db.execute(
+            `SELECT id, title, location, severity, status
+             FROM incidents
+             ORDER BY created_at DESC`
+        );
         const [helpRequestsResult, resourceOffersResult] = await Promise.all([
             db.execute(
                 `SELECT id, title, category, quantity_needed, location, urgency, status
@@ -316,7 +562,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
         const [helpRequests] = helpRequestsResult;
         const [resourceOffers] = resourceOffersResult;
 
-        const incidents = await Promise.all(dashboardIncidentMarkers.map(async (incident) => ({
+        const incidents = await Promise.all(incidentResults.map(async (incident) => ({
             id: `incident-${incident.id}`,
             type: 'incident',
             title: incident.title,
@@ -523,7 +769,7 @@ app.get('/resourceOffers/:id', requireLogin, async (req, res) => {
         res.render('resourceOffers/show', {
             offer,
             matches,
-            isOwner: offer.user_id === req.session.user.id
+            isOwner: canManageOffer(offer, req)
         });
     } catch (error) {
         console.error(error);
@@ -535,11 +781,11 @@ app.get('/resourceOffers/:id', requireLogin, async (req, res) => {
 app.get('/resourceOffers/:id/edit', requireLogin, async (req, res) => {
     try {
         const [[offer]] = await db.execute(
-            'SELECT * FROM resource_offers WHERE id = ? AND user_id = ?',
-            [req.params.id, req.session.user.id]
+            'SELECT * FROM resource_offers WHERE id = ?',
+            [req.params.id]
         );
 
-        if (!offer) {
+        if (!canManageOffer(offer, req)) {
             req.session.error = 'You can only edit your own resource offers.';
             return res.redirect('/resourceOffers');
         }
@@ -560,15 +806,25 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
     const { category, item_name, quantity, location, notes, status } = req.body;
 
     try {
+        const [[offer]] = await db.execute(
+            'SELECT * FROM resource_offers WHERE id = ?',
+            [req.params.id]
+        );
+
+        if (!canManageOffer(offer, req)) {
+            req.session.error = 'You can only update your own resource offers.';
+            return res.redirect('/resourceOffers');
+        }
+
         const [result] = await db.execute(
             `UPDATE resource_offers
              SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, status = ?
-             WHERE id = ? AND user_id = ?`,
-            [category, item_name, quantity, location, notes || null, status, req.params.id, req.session.user.id]
+             WHERE id = ?`,
+            [category, item_name, quantity, location, notes || null, status, req.params.id]
         );
 
         if (result.affectedRows === 0) {
-            req.session.error = 'You can only update your own resource offers.';
+            req.session.error = 'Unable to update resource offer.';
             return res.redirect('/resourceOffers');
         }
 
@@ -585,13 +841,23 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
 
 app.post('/resourceOffers/:id/delete', requireLogin, async (req, res) => {
     try {
+        const [[offer]] = await db.execute(
+            'SELECT * FROM resource_offers WHERE id = ?',
+            [req.params.id]
+        );
+
+        if (!canManageOffer(offer, req)) {
+            req.session.error = 'You can only delete your own resource offers.';
+            return res.redirect('/resourceOffers');
+        }
+
         const [result] = await db.execute(
-            'DELETE FROM resource_offers WHERE id = ? AND user_id = ?',
-            [req.params.id, req.session.user.id]
+            'DELETE FROM resource_offers WHERE id = ?',
+            [req.params.id]
         );
 
         req.session[result.affectedRows ? 'success' : 'error'] =
-            result.affectedRows ? 'Resource offer deleted.' : 'You can only delete your own resource offers.';
+            result.affectedRows ? 'Resource offer deleted.' : 'Resource offer not found.';
         res.redirect('/resourceOffers');
     } catch (error) {
         console.error(error);

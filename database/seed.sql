@@ -15,6 +15,17 @@ ON DUPLICATE KEY UPDATE
     quantity_needed = VALUES(quantity_needed),
     status = VALUES(status);
 
+INSERT INTO incidents (id, user_id, title, category, description, location, severity, status) VALUES
+    (1, 3, 'Flooding in common corridor', 'Infrastructure', 'Water is pooling near the lifts. Evacuation may be needed if level rises.', 'Jurong West', 'High', 'Reported'),
+    (2, 3, 'Power outage at bus interchange', 'Safety', 'Several streetlights and signals have gone dark after the storm.', 'Woodlands', 'Medium', 'Verified'),
+    (3, 3, 'Medical cluster alert at temporary shelter', 'Medical', 'Multiple residents showing symptoms and needing first aid supplies.', 'Tampines', 'Critical', 'In Progress')
+ON DUPLICATE KEY UPDATE
+    title = VALUES(title),
+    description = VALUES(description),
+    location = VALUES(location),
+    severity = VALUES(severity),
+    status = VALUES(status);
+
 INSERT INTO resource_offers (id, user_id, category, item_name, quantity, location, notes, status) VALUES
     (1, 1, 'Water', 'Bottled water', 10, 'Jurong', 'Can deliver within the neighbourhood.', 'Available'),
     (2, 1, 'Food', 'Ready-to-eat meal packs', 15, 'Yishun', 'Vegetarian packs available.', 'Available')
