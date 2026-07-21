@@ -4,6 +4,7 @@
     const mapPanel = document.getElementById('dashboardMapPanel');
     const mapContainer = document.getElementById('dashboardMap');
     const mapMessage = document.getElementById('dashboardMapMessage');
+    const mapReset = document.getElementById('dashboardMapReset');
     const filterButtons = document.querySelectorAll('[data-map-type]');
 
     if (!mapToggle || !reportsPanel || !mapPanel || !mapContainer || typeof L === 'undefined') {
@@ -25,6 +26,8 @@
     let mapLoadPromise;
     let isMapVisible = false;
     let markerById = new Map();
+    const defaultMapCenter = [1.3521, 103.8198];
+    const defaultMapZoom = 11;
     const params = new URLSearchParams(window.location.search);
     const requestedMapType = params.get('map');
     const requestedItemId = params.get('item');
@@ -47,6 +50,9 @@
     }
 
     function buildPopup(item) {
+        const imageMarkup = item.imageUrl
+            ? `<img class="map-popup-image" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title || 'Resource')} image">`
+            : '';
         const details = [
             `<span class="map-popup-detail"><strong>Type:</strong> ${escapeHtml(getTypeLabel(item.type))}</span>`,
             `<span class="map-popup-detail"><strong>Location:</strong> ${escapeHtml(item.location || 'Unknown')}</span>`,
@@ -69,7 +75,7 @@
             details.push('<span class="map-popup-approximate">Approximate central Singapore location</span>');
         }
 
-        return `<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}`;
+        return `${imageMarkup}<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}`;
     }
 
     function showMapMessage(message) {
@@ -92,7 +98,7 @@
             minZoom: 10,
             maxBounds: [[1.16, 103.55], [1.52, 104.12]],
             maxBoundsViscosity: 0.7
-        }).setView([1.3521, 103.8198], 11);
+        }).setView(defaultMapCenter, defaultMapZoom);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -144,6 +150,15 @@
         map.setView(marker.getLatLng(), 14, { animate: true });
         marker.openTooltip();
         marker.openPopup();
+    }
+
+    function resetMapView() {
+        if (!map) {
+            return;
+        }
+
+        map.closePopup();
+        map.setView(defaultMapCenter, defaultMapZoom, { animate: true });
     }
 
     async function loadMapItems() {
@@ -257,6 +272,10 @@
             setLayerVisible(type, isActive);
         });
     });
+
+    if (mapReset) {
+        mapReset.addEventListener('click', resetMapView);
+    }
 
     if (Object.prototype.hasOwnProperty.call(markerLayers, requestedMapType)) {
         showMap(requestedMapType);

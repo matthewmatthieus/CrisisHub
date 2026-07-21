@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS resource_offers (
     quantity INT NOT NULL,
     location VARCHAR(100) NOT NULL,
     notes TEXT,
+    image_filename VARCHAR(255),
     status ENUM('Available', 'Matched', 'Fulfilled', 'Unavailable') NOT NULL DEFAULT 'Available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
