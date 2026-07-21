@@ -50,6 +50,9 @@
     }
 
     function buildPopup(item) {
+        const imageMarkup = item.imageUrl
+            ? `<img class="map-popup-image" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title || 'Resource')} image">`
+            : '';
         const details = [
             `<span class="map-popup-detail"><strong>Type:</strong> ${escapeHtml(getTypeLabel(item.type))}</span>`,
             `<span class="map-popup-detail"><strong>Location:</strong> ${escapeHtml(item.location || 'Unknown')}</span>`,
@@ -72,7 +75,7 @@
             details.push('<span class="map-popup-approximate">Approximate central Singapore location</span>');
         }
 
-        return `<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}`;
+        return `${imageMarkup}<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}`;
     }
 
     function showMapMessage(message) {

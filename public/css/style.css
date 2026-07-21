@@ -260,14 +260,6 @@ p{
 
 }
 
-.resource-offer-item{
-
-    display:flex;
-    align-items:center;
-    gap:12px;
-
-}
-
 .resource-thumb{
 
     width:54px;
@@ -1326,6 +1318,20 @@ p{
     display:block;
     margin-bottom:6px;
     font-size:14px;
+
+}
+
+.map-popup-image{
+
+    display:block;
+    width:100%;
+    max-width:230px;
+    height:118px;
+    object-fit:cover;
+    margin-bottom:10px;
+    border:1px solid var(--border-light);
+    border-radius:8px;
+    background:#111827;
 
 }
 

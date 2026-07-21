@@ -633,7 +633,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
                  ORDER BY created_at DESC`
             ),
             db.execute(
-                `SELECT id, item_name, category, quantity, location, status
+                `SELECT id, item_name, category, quantity, location, status, image_filename
                  FROM resource_offers
                  ORDER BY created_at DESC`
             )
@@ -672,6 +672,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             status: offer.status,
             category: offer.category,
             quantity: offer.quantity,
+            imageUrl: offer.image_filename ? `/uploads/resources/${offer.image_filename}` : null,
             ...await resolveSingaporeLocation(offer.location)
         })));
 
