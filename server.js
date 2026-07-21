@@ -569,8 +569,6 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             location: incident.location,
             status: incident.status,
             severity: incident.severity,
-            url: `/?map=incident&item=incident-${incident.id}`,
-            actionLabel: 'View Incident on Map',
             ...await resolveSingaporeLocation(incident.location)
         })));
 
@@ -583,8 +581,6 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             category: request.category,
             urgency: request.urgency,
             quantity: request.quantity_needed,
-            url: `/?map=help-request&item=help-request-${request.id}`,
-            actionLabel: 'View Request on Map',
             ...await resolveSingaporeLocation(request.location)
         })));
 
@@ -596,9 +592,6 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             status: offer.status,
             category: offer.category,
             quantity: offer.quantity,
-            url: `/resourceOffers/${offer.id}`,
-            mapUrl: `/?map=resource&item=resource-${offer.id}`,
-            actionLabel: 'Open Resource',
             ...await resolveSingaporeLocation(offer.location)
         })));
 
@@ -658,24 +651,6 @@ app.get('/api/location-suggestions', isAuthenticated, async (req, res) => {
         console.error('Unable to search Singapore locations:', error.message);
         return res.status(502).json({ error: 'Location search is temporarily unavailable.' });
     }
-});
-
-app.get('/demo/member3-login', (req, res) => {
-    req.session.user = {
-        id: 1,
-        user_id: 1,
-        username: 'Guest',
-        name: 'Guest',
-        role: 'user'
-    };
-    req.session.success = 'Demo login active for Member 3 resource offer testing.';
-    res.redirect('/resourceOffers');
-});
-
-app.get('/demo/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/');
-    });
 });
 
 app.get('/resourceOffers', requireLogin, async (req, res) => {

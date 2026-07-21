@@ -69,12 +69,7 @@
             details.push('<span class="map-popup-approximate">Approximate central Singapore location</span>');
         }
 
-        const actionUrl = item.url || item.mapUrl;
-        const action = actionUrl
-            ? `<a class="map-popup-action" href="${escapeHtml(actionUrl)}">${escapeHtml(item.actionLabel || 'Open Details')}</a>`
-            : '';
-
-        return `<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}${action}`;
+        return `<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}`;
     }
 
     function showMapMessage(message) {
