@@ -39,28 +39,28 @@
             <ul class="navbar-nav ms-5">
 
                 <li class="nav-item">
-                    <a class="nav-link active" href="/">
+                    <a class="nav-link <%= currentPath === '/' && !currentMapType ? 'active' : '' %>" href="/">
                         <i class="bi bi-rss-fill me-1"></i>
                         Feed
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/incidents">
+                    <a class="nav-link <%= currentMapType === 'incident' ? 'active' : '' %>" href="/?map=incident">
                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
                         Incidents
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/resourceOffers">
+                    <a class="nav-link <%= currentPath.startsWith('/resourceOffers') || currentMapType === 'resource' ? 'active' : '' %>" href="/resourceOffers">
                         <i class="bi bi-box-seam me-1"></i>
                         Resources
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="/helpRequests">
+                    <a class="nav-link <%= currentMapType === 'help-request' ? 'active' : '' %>" href="/?map=help-request">
                         <i class="bi bi-life-preserver me-1"></i>
                         Help
                     </a>
