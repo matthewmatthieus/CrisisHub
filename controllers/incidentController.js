@@ -1,8 +1,6 @@
 const incidentModel = require('../models/incidentModel');
 
-/**
- * Display all incidents
- */
+// Display all incidents
 async function showAllIncidents(req, res) {
     try {
         const incidents = await incidentModel.getAllIncidents();
@@ -10,35 +8,37 @@ async function showAllIncidents(req, res) {
         res.render('incidents/index', {
             incidents
         });
-    } catch (err) {
-        console.error(err);
+
+    } catch (error) {
+        console.error(error);
         req.session.error = 'Unable to load incidents.';
         res.redirect('/');
     }
 }
 
-/**
- * Display create incident form
- */
+// Display create form
 function showCreateForm(req, res) {
     res.render('incidents/create');
 }
 
-/**
- * Create a new incident
- */
+// Create incident
 async function createIncident(req, res) {
     try {
+
         const {
             title,
             description,
             category,
             severity,
-            location,
-            latitude,
-            longitude,
-            status
+            location
         } = req.body;
+
+        let image = null;
+
+        // We'll improve image upload later
+        if (req.files && req.files.image) {
+            image = req.files.image.name;
+        }
 
         await incidentModel.createIncident({
             title,
@@ -46,28 +46,26 @@ async function createIncident(req, res) {
             category,
             severity,
             location,
-            latitude,
-            longitude,
-            status,
-            image: req.file ? req.file.filename : null,
-            user_id: req.session.user.user_id
+            latitude: null,
+            longitude: null,
+            image,
+            user_id: req.session.user.id
         });
 
         req.session.success = 'Incident reported successfully.';
         res.redirect('/incidents');
 
-    } catch (err) {
-        console.error(err);
-        req.session.error = 'Unable to create incident.';
+    } catch (error) {
+        console.error(error);
+        req.session.error = 'Unable to report incident.';
         res.redirect('/incidents/create');
     }
 }
 
-/**
- * Display a single incident
- */
+// Display single incident
 async function showIncident(req, res) {
     try {
+
         const incident = await incidentModel.getIncidentById(req.params.id);
 
         if (!incident) {
@@ -79,18 +77,17 @@ async function showIncident(req, res) {
             incident
         });
 
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         req.session.error = 'Unable to load incident.';
         res.redirect('/incidents');
     }
 }
 
-/**
- * Display edit form
- */
+// Display edit form
 async function showEditForm(req, res) {
     try {
+
         const incident = await incidentModel.getIncidentById(req.params.id);
 
         if (!incident) {
@@ -102,26 +99,23 @@ async function showEditForm(req, res) {
             incident
         });
 
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         req.session.error = 'Unable to load incident.';
         res.redirect('/incidents');
     }
 }
 
-/**
- * Update incident
- */
+// Update incident
 async function updateIncident(req, res) {
     try {
+
         const {
             title,
             description,
             category,
             severity,
             location,
-            latitude,
-            longitude,
             status
         } = req.body;
 
@@ -131,34 +125,32 @@ async function updateIncident(req, res) {
             category,
             severity,
             location,
-            latitude,
-            longitude,
-            status,
-            image: req.file ? req.file.filename : null
+            latitude: null,
+            longitude: null,
+            status
         });
 
         req.session.success = 'Incident updated successfully.';
-        res.redirect(`/incidents/${req.params.id}`);
+        res.redirect('/incidents');
 
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         req.session.error = 'Unable to update incident.';
         res.redirect(`/incidents/${req.params.id}/edit`);
     }
 }
 
-/**
- * Delete incident
- */
+// Delete incident
 async function deleteIncident(req, res) {
     try {
+
         await incidentModel.deleteIncident(req.params.id);
 
         req.session.success = 'Incident deleted successfully.';
         res.redirect('/incidents');
 
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         req.session.error = 'Unable to delete incident.';
         res.redirect('/incidents');
     }

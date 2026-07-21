@@ -266,7 +266,7 @@ app.use('/incidents', incidentRoutes);
 app.get('/incidents', requireLogin, async (req, res) => {
     try {
         const [incidents] = await db.execute(
-            `SELECT i.*, COALESCE(u.username, u.name) AS owner_name
+            `SELECT i.*, u.username AS owner_name
              FROM incidents i
              LEFT JOIN users u ON i.user_id = u.id
              ORDER BY i.created_at DESC`
@@ -314,7 +314,7 @@ app.post('/incidents', isAdmin, async (req, res) => {
 app.get('/incidents/:id', requireLogin, async (req, res) => {
     try {
         const [[incident]] = await db.execute(
-            `SELECT i.*, COALESCE(u.username, u.name) AS owner_name
+            `SELECT i.*, u.username AS owner_name
              FROM incidents i
              LEFT JOIN users u ON i.user_id = u.id
              WHERE i.id = ?`,
@@ -406,7 +406,7 @@ app.post('/incidents/:id/delete', isAdmin, async (req, res) => {
 app.get('/helpRequests', requireLogin, async (req, res) => {
     try {
         const [requests] = await db.execute(
-            `SELECT hr.*, COALESCE(u.username, u.name) AS requester
+            `SELECT hr.*, u.username AS requester
              FROM help_requests hr
              LEFT JOIN users u ON hr.user_id = u.id
              ORDER BY hr.created_at DESC`
@@ -414,7 +414,9 @@ app.get('/helpRequests', requireLogin, async (req, res) => {
 
         res.render('helpRequests/index', {
             requests,
-            isAdmin: isAdminUser(req)
+            isAdmin:
+                req.session.user &&
+                req.session.user.role.toLowerCase() === 'admin'
         });
     } catch (error) {
         console.error(error);
@@ -454,7 +456,7 @@ app.post('/helpRequests', isAdmin, async (req, res) => {
 app.get('/helpRequests/:id', requireLogin, async (req, res) => {
     try {
         const [[request]] = await db.execute(
-            `SELECT hr.*, COALESCE(u.username, u.name) AS requester
+            `SELECT hr.*, u.username AS requester
              FROM help_requests hr
              LEFT JOIN users u ON hr.user_id = u.id
              WHERE hr.id = ?`,
