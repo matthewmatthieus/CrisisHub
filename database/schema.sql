@@ -19,6 +19,19 @@ CREATE TABLE IF NOT EXISTS help_requests (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS incidents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    description TEXT,
+    location VARCHAR(100) NOT NULL,
+    severity ENUM('Low', 'Medium', 'High', 'Critical') NOT NULL DEFAULT 'Medium',
+    status ENUM('Reported', 'Verified', 'In Progress', 'Resolved', 'Closed') NOT NULL DEFAULT 'Reported',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS resource_offers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

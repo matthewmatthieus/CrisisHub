@@ -14,7 +14,8 @@ function isAuthenticated(req, res, next) {
  * Ensures the authenticated user has Admin role.
  */
 function isAdmin(req, res, next) {
-    if (!req.session.user || req.session.user.role !== 'Admin') {
+    const role = req.session.user && String(req.session.user.role).toLowerCase();
+    if (!req.session.user || role !== 'admin') {
         req.session.warning = 'Admin access is required for this page.';
         return res.redirect('/');
     }
@@ -26,7 +27,8 @@ function isAdmin(req, res, next) {
  * Ensures the authenticated user has Moderator or Admin role.
  */
 function isModerator(req, res, next) {
-    if (!req.session.user || !['Moderator', 'Admin'].includes(req.session.user.role)) {
+    const role = req.session.user && String(req.session.user.role).toLowerCase();
+    if (!req.session.user || !['moderator', 'admin'].includes(role)) {
         req.session.warning = 'Moderator access is required for this page.';
         return res.redirect('/');
     }
