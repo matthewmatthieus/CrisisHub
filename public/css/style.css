@@ -260,6 +260,74 @@ p{
 
 }
 
+.resource-offer-item{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+}
+
+.resource-thumb{
+
+    width:54px;
+    height:54px;
+    flex:0 0 54px;
+    object-fit:cover;
+    border:1px solid var(--border-light);
+    border-radius:8px;
+    background:#111827;
+
+}
+
+.resource-thumb-empty{
+
+    display:grid;
+    place-items:center;
+    color:var(--text-muted);
+
+}
+
+.resource-image-current{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:12px;
+    color:var(--text-muted);
+    font-size:13px;
+
+}
+
+.resource-image-current img{
+
+    width:72px;
+    height:72px;
+    object-fit:cover;
+    border:1px solid var(--border-light);
+    border-radius:8px;
+
+}
+
+.resource-hero-image{
+
+    overflow:hidden;
+    margin-bottom:24px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#111827;
+
+}
+
+.resource-hero-image img{
+
+    display:block;
+    width:100%;
+    max-height:360px;
+    object-fit:cover;
+
+}
+
 .status-pill{
 
     display:inline-flex;

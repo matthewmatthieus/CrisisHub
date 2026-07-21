@@ -53,8 +53,20 @@
                     <% offers.forEach((offer) => { %>
                         <tr>
                             <td>
-                                <strong><%= offer.item_name %></strong>
-                                <div class="text-secondary small"><%= offer.notes || 'No notes added' %></div>
+                                <div class="resource-offer-item">
+                                    <% if (offer.image_filename) { %>
+                                        <img class="resource-thumb" src="/uploads/resources/<%= offer.image_filename %>" alt="<%= offer.item_name %> image">
+                                    <% } else { %>
+                                        <div class="resource-thumb resource-thumb-empty">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                    <% } %>
+
+                                    <div>
+                                        <strong><%= offer.item_name %></strong>
+                                        <div class="text-secondary small"><%= offer.notes || 'No notes added' %></div>
+                                    </div>
+                                </div>
                             </td>
                             <td><%= offer.category %></td>
                             <td><%= offer.quantity %></td>

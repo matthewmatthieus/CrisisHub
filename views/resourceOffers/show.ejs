@@ -33,6 +33,12 @@
     <div class="alert alert-danger"><%= error %></div>
 <% } %>
 
+<% if (offer.image_filename) { %>
+    <div class="resource-hero-image">
+        <img src="/uploads/resources/<%= offer.image_filename %>" alt="<%= offer.item_name %> image">
+    </div>
+<% } %>
+
 <div class="dashboard-grid mb-4">
     <div class="stat-card">
         <p class="stat-label">Category</p>
