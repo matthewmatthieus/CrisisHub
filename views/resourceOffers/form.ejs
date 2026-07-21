@@ -38,7 +38,11 @@
             <div class="col-md-4">
                 <label class="form-label" for="location">Location</label>
                 <input class="form-control" id="location" name="location" type="text"
-                       value="<%= offer ? offer.location : '' %>" required>
+                       value="<%= offer ? offer.location : '' %>"
+                       placeholder="Search address or postal code"
+                       data-location-autocomplete="true"
+                       autocomplete="off"
+                       required>
             </div>
 
             <div class="col-md-4">

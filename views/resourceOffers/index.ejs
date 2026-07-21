@@ -5,6 +5,10 @@
     </div>
 
     <div class="page-actions">
+        <a class="btn btn-outline-light" href="/?map=resource">
+            <i class="bi bi-map me-1"></i>
+            View Map
+        </a>
         <a class="btn btn-primary" href="/resourceOffers/new">
             <i class="bi bi-plus-circle me-1"></i>
             New Offer
@@ -63,6 +67,9 @@
                                 <% } %>
                             </td>
                             <td class="text-end">
+                                <a class="btn btn-outline-light btn-sm" href="/?map=resource&item=resource-<%= offer.id %>">
+                                    Map
+                                </a>
                                 <a class="btn btn-outline-light btn-sm" href="/resourceOffers/<%= offer.id %>">
                                     Details
                                 </a>

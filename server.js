@@ -38,6 +38,7 @@ app.set('layout', 'layouts/main');
 
 app.use((req, res, next) => {
     res.locals.currentPath = req.path;
+    res.locals.currentMapType = req.query.map || null;
     res.locals.currentUser = req.session.user || null;
     res.locals.success = req.session.success || null;
     res.locals.error = req.session.error || null;
@@ -72,7 +73,7 @@ app.use(async (req, res, next) => {
 function requireLogin(req, res, next) {
     if (!req.session.user) {
         req.session.error = 'Please login or register to access this page.';
-        return res.redirect('/login');
+        return res.redirect('/auth/login');
     }
 
     next();
@@ -140,13 +141,264 @@ async function refreshMatchesForOffer(offerId) {
     }
 }
 
+const singaporeLocations = [
+    { names: ['ntu south spine', 'ntu'], latitude: 1.3483, longitude: 103.6831 },
+    { names: ['jurong west'], latitude: 1.3404, longitude: 103.7090 },
+    { names: ['jurong'], latitude: 1.3329, longitude: 103.7436 },
+    { names: ['woodlands'], latitude: 1.4382, longitude: 103.7890 },
+    { names: ['tampines'], latitude: 1.3521, longitude: 103.9447 },
+    { names: ['yishun'], latitude: 1.4304, longitude: 103.8354 },
+    { names: ['north south region', 'north singapore'], latitude: 1.4180, longitude: 103.8200 }
+];
+
+const singaporeLocationCache = new Map();
+
+function resolveKnownSingaporeLocation(location) {
+    const normalizedLocation = String(location || '').trim().toLowerCase();
+    const match = singaporeLocations.find((entry) =>
+        entry.names.some((name) => normalizedLocation === name)
+    );
+
+    if (match) {
+        return {
+            latitude: match.latitude,
+            longitude: match.longitude,
+            approximate: false
+        };
+    }
+
+    return null;
+}
+
+async function resolveSingaporeLocation(location) {
+    const normalizedLocation = String(location || '').trim().toLowerCase();
+    const knownLocation = resolveKnownSingaporeLocation(location);
+
+    if (knownLocation) {
+        return knownLocation;
+    }
+
+    if (!normalizedLocation) {
+        return {
+            latitude: 1.3521,
+            longitude: 103.8198,
+            approximate: true
+        };
+    }
+
+    if (singaporeLocationCache.has(normalizedLocation)) {
+        return singaporeLocationCache.get(normalizedLocation);
+    }
+
+    const resolutionPromise = (async () => {
+        const geocodeUrl = new URL(
+            'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates'
+        );
+        geocodeUrl.search = new URLSearchParams({
+            SingleLine: location,
+            countryCode: 'SGP',
+            maxLocations: '1',
+            outFields: 'Match_addr,Addr_type',
+            forStorage: 'false',
+            f: 'json'
+        }).toString();
+
+        try {
+            const response = await fetch(geocodeUrl, {
+                headers: {
+                    Accept: 'application/json',
+                    'User-Agent': 'CrisisHub/1.0'
+                },
+                signal: AbortSignal.timeout(6000)
+            });
+
+            if (!response.ok) {
+                throw new Error(`ArcGIS geocoding returned ${response.status}`);
+            }
+
+            const data = await response.json();
+            const candidate = Array.isArray(data.candidates) ? data.candidates[0] : null;
+            const latitude = Number(candidate?.location?.y);
+            const longitude = Number(candidate?.location?.x);
+            const isWithinSingapore = latitude >= 1.15
+                && latitude <= 1.50
+                && longitude >= 103.55
+                && longitude <= 104.10;
+
+            if (candidate && candidate.score >= 70 && isWithinSingapore) {
+                return {
+                    latitude,
+                    longitude,
+                    approximate: false
+                };
+            }
+        } catch (error) {
+            console.error(`Unable to geocode location "${location}":`, error.message);
+        }
+
+        return {
+            latitude: 1.3521,
+            longitude: 103.8198,
+            approximate: true
+        };
+    })();
+
+    singaporeLocationCache.set(normalizedLocation, resolutionPromise);
+    const resolvedLocation = await resolutionPromise;
+    singaporeLocationCache.set(normalizedLocation, resolvedLocation);
+
+    return resolvedLocation;
+}
+
+const dashboardIncidentMarkers = [
+    {
+        id: 1,
+        title: 'Fallen Tree at Jurong West',
+        location: 'Jurong West',
+        severity: 'High',
+        status: 'Verified'
+    },
+    {
+        id: 2,
+        title: 'Streetlight Not Working',
+        location: 'Jurong West',
+        severity: 'Medium',
+        status: 'Under verification'
+    },
+    {
+        id: 3,
+        title: 'Fallen Tree Blocking Road',
+        location: 'NTU South Spine',
+        severity: 'High',
+        status: 'Verified'
+    }
+];
+
 app.get('/', isAuthenticated, authController.showDashboard);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 
+app.get('/api/map-items', isAuthenticated, async (req, res) => {
+    try {
+        const [helpRequestsResult, resourceOffersResult] = await Promise.all([
+            db.execute(
+                `SELECT id, title, category, quantity_needed, location, urgency, status
+                 FROM help_requests
+                 ORDER BY created_at DESC`
+            ),
+            db.execute(
+                `SELECT id, item_name, category, quantity, location, status
+                 FROM resource_offers
+                 ORDER BY created_at DESC`
+            )
+        ]);
+
+        const [helpRequests] = helpRequestsResult;
+        const [resourceOffers] = resourceOffersResult;
+
+        const incidents = await Promise.all(dashboardIncidentMarkers.map(async (incident) => ({
+            id: `incident-${incident.id}`,
+            type: 'incident',
+            title: incident.title,
+            location: incident.location,
+            status: incident.status,
+            severity: incident.severity,
+            url: `/?map=incident&item=incident-${incident.id}`,
+            actionLabel: 'View Incident on Map',
+            ...await resolveSingaporeLocation(incident.location)
+        })));
+
+        const requests = await Promise.all(helpRequests.map(async (request) => ({
+            id: `help-request-${request.id}`,
+            type: 'help-request',
+            title: request.title,
+            location: request.location,
+            status: request.status,
+            category: request.category,
+            urgency: request.urgency,
+            quantity: request.quantity_needed,
+            url: `/?map=help-request&item=help-request-${request.id}`,
+            actionLabel: 'View Request on Map',
+            ...await resolveSingaporeLocation(request.location)
+        })));
+
+        const resources = await Promise.all(resourceOffers.map(async (offer) => ({
+            id: `resource-${offer.id}`,
+            type: 'resource',
+            title: offer.item_name,
+            location: offer.location,
+            status: offer.status,
+            category: offer.category,
+            quantity: offer.quantity,
+            url: `/resourceOffers/${offer.id}`,
+            mapUrl: `/?map=resource&item=resource-${offer.id}`,
+            actionLabel: 'Open Resource',
+            ...await resolveSingaporeLocation(offer.location)
+        })));
+
+        return res.json({ items: [...incidents, ...requests, ...resources] });
+    } catch (error) {
+        console.error('Unable to load dashboard map items:', error);
+        return res.status(500).json({ error: 'Unable to load map data.' });
+    }
+});
+
+app.get('/api/location-suggestions', isAuthenticated, async (req, res) => {
+    const query = String(req.query.q || '').trim();
+
+    if (query.length < 3) {
+        return res.json({ suggestions: [] });
+    }
+
+    if (query.length > 100) {
+        return res.status(400).json({ error: 'Location search is too long.' });
+    }
+
+    const searchUrl = new URL(
+        'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest'
+    );
+    searchUrl.search = new URLSearchParams({
+        text: query,
+        countryCode: 'SGP',
+        category: 'Address,Postal',
+        location: '103.8198,1.3521',
+        maxSuggestions: '6',
+        returnCollections: 'false',
+        f: 'json'
+    }).toString();
+
+    try {
+        const response = await fetch(searchUrl, {
+            headers: {
+                Accept: 'application/json',
+                'User-Agent': 'CrisisHub/1.0'
+            },
+            signal: AbortSignal.timeout(6000)
+        });
+
+        if (!response.ok) {
+            throw new Error(`ArcGIS location search returned ${response.status}`);
+        }
+
+        const data = await response.json();
+        const suggestions = Array.isArray(data.suggestions)
+            ? data.suggestions.map((suggestion) => ({
+                text: suggestion.text
+            }))
+            : [];
+
+        return res.json({ suggestions });
+    } catch (error) {
+        console.error('Unable to search Singapore locations:', error.message);
+        return res.status(502).json({ error: 'Location search is temporarily unavailable.' });
+    }
+});
+
 app.get('/demo/member3-login', (req, res) => {
     req.session.user = {
         id: 1,
+        user_id: 1,
+        username: 'Guest',
         name: 'Guest',
         role: 'user'
     };
@@ -191,12 +443,17 @@ app.get('/resourceOffers/new', requireLogin, (req, res) => {
 app.post('/resourceOffers', requireLogin, async (req, res) => {
     const { category, item_name, quantity, location, notes } = req.body;
 
+    if (!location || !location.trim()) {
+        req.session.error = 'Please select or enter a valid location.';
+        return res.redirect('/resourceOffers/new');
+    }
+
     try {
         const [result] = await db.execute(
             `INSERT INTO resource_offers
-                (id, category, item_name, quantity, location, notes, status)
+                (user_id, category, item_name, quantity, location, notes, status)
              VALUES (?, ?, ?, ?, ?, ?, 'Available')`,
-            [req.session.user.id, category, item_name, quantity, location, notes || null]
+            [req.session.user.id, category, item_name, quantity, location.trim(), notes || null]
         );
 
         await refreshMatchesForOffer(result.insertId);
@@ -246,7 +503,7 @@ app.get('/resourceOffers/:id', requireLogin, async (req, res) => {
         res.render('resourceOffers/show', {
             offer,
             matches,
-            isOwner: offer.userid === req.session.user.id
+            isOwner: offer.user_id === req.session.user.id
         });
     } catch (error) {
         console.error(error);
