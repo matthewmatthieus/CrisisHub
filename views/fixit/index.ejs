@@ -1,0 +1,19 @@
+<div class="container mt-4">
+  <h2 class="mb-3">FixIt Reports</h2>
+
+  <% if (fixitReports && fixitReports.length > 0) { %>
+    <ul class="list-group">
+      <% fixitReports.forEach(report => { %>
+        <li class="list-group-item">
+          <strong><%= report.title %></strong> – <%= report.category %>  
+          <br>
+          <small><%= report.location %> | Severity: <%= report.severity %></small>
+          <br>
+          <a href="/fixit/<%= report.id %>">View Details</a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>No FixIt reports yet.</p>
+  <% } %>
+</div>

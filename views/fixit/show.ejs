@@ -1,0 +1,13 @@
+<div class="container mt-4">
+  <h2><%= fixit.title %></h2>
+  <p><strong>Category:</strong> <%= fixit.category %></p>
+  <p><strong>Location:</strong> <%= fixit.location %></p>
+  <p><strong>Severity:</strong> <%= fixit.severity %></p>
+  <p><strong>Description:</strong> <%= fixit.description %></p>
+
+  <% if (fixit.photo_url) { %>
+    <img src="<%= fixit.photo_url %>" alt="FixIt photo evidence" class="img-fluid mt-3">
+  <% } %>
+
+  <a href="/fixit" class="btn btn-secondary mt-3">Back to FixIt Reports</a>
+</div>

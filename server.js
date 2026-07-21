@@ -262,7 +262,6 @@ app.use('/profile', profileRoutes);
 app.use('/verification', verificationRoutes);
 app.use('/incidents', incidentRoutes);
 
-
 app.get('/incidents', requireLogin, async (req, res) => {
     try {
         const [incidents] = await db.execute(
@@ -402,6 +401,62 @@ app.post('/incidents/:id/delete', isAdmin, async (req, res) => {
         res.redirect('/incidents');
     }
 });
+
+// =====================
+// FixIt Routes
+// =====================
+
+// Show all FixIt reports
+app.get("/fixit", async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM fixit_reports ORDER BY created_at DESC");
+    res.render("fixit/index", { fixitReports: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.render("fixit/index", { fixitReports: [], error: "Unable to load FixIt reports" });
+  }
+});
+
+// Show a single FixIt report
+app.get("/fixit/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query("SELECT * FROM fixit_reports WHERE id = $1", [id]);
+    res.render("fixit/show", { fixit: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.redirect("/fixit");
+  }
+});
+
+// Show FixIt form
+app.get("/report/fixit", (req, res) => {
+  res.render("fixit/form");
+});
+
+//Show Incident form
+app.get("/report/incident", (req, res) => {
+  res.render("incidents/form"); // views/incidents/form.ejs
+});
+
+// Handle FixIt form submission
+app.post("/api/fixit", async (req, res) => {
+  try {
+    const { title, category, location, severity, description } = req.body;
+
+    await db.query(
+      "INSERT INTO fixit_reports (title, category, location, severity, description) VALUES ($1, $2, $3, $4, $5)",
+      [title, category, location, severity, description]
+    );
+
+    res.redirect("/fixit");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to submit FixIt issue");
+  }
+});
+
+
 
 app.get('/helpRequests', requireLogin, async (req, res) => {
     try {
