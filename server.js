@@ -7,6 +7,7 @@ const db = require('./config/db');
 const verificationRoutes = require('./routes/verification');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const incidentRoutes = require('./routes/incidentRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated } = require('./middleware/authMiddleware');
 
@@ -277,6 +278,9 @@ const dashboardIncidentMarkers = [
 app.get('/', isAuthenticated, authController.showDashboard);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
+app.use('/verification', verificationRoutes);
+app.use('/incidents', incidentRoutes);
+
 
 app.get('/incidents', isAuthenticated, (req, res) => {
     res.render('emptyFeature', {
