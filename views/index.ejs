@@ -27,13 +27,43 @@
 
             </button>
 
-            <a class="btn btn-primary px-4" href="/incidents">
+            <div class="dropdown">
 
-                <i class="bi bi-plus-circle me-2"></i>
+                <button class="btn btn-warning report-main-btn dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
 
-                Report Incident
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Report
 
-            </a>
+                </button>
+
+
+                <ul class="dropdown-menu">
+
+                    <li>
+                        <a class="dropdown-item" href="/incidents/create">
+
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Report Incident
+
+                        </a>
+                    </li>
+
+
+                    <li>
+                        <a class="dropdown-item" href="/report/fixit">
+
+                            <i class="bi bi-tools me-2"></i>
+                            Report FixIt
+
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
 
         </div>
 

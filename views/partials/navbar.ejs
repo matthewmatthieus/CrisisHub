@@ -23,6 +23,7 @@
 
         </a>
 
+
         <!-- Mobile Toggle -->
         <button class="navbar-toggler border-0 shadow-none"
                 type="button"
@@ -33,52 +34,59 @@
 
         </button>
 
+
         <div class="collapse navbar-collapse" id="navbarContent">
 
-            <!-- Navigation -->
-            <ul class="navbar-nav ms-5">
+
+            <!-- Main Navigation -->
+            <ul class="navbar-nav ms-4">
+
 
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath === '/' && !currentMapType ? 'active' : '' %>" href="/">
-                        <i class="bi bi-rss-fill me-1"></i>
+                        <i class="bi bi-rss-fill"></i>
                         Feed
                     </a>
                 </li>
 
+
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath.startsWith('/incidents') ? 'active' : '' %>" href="/incidents">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <i class="bi bi-exclamation-triangle-fill"></i>
                         Incidents
                     </a>
                 </li>
 
+
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath.startsWith('/helpRequests') ? 'active' : '' %>" href="/helpRequests">
-                        <i class="bi bi-life-preserver me-1"></i>
+                        <i class="bi bi-life-preserver"></i>
                         Help
                     </a>
                 </li>
 
+
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath.startsWith('/resourceOffers') ? 'active' : '' %>" href="/resourceOffers">
-                        <i class="bi bi-box-seam me-1"></i>
+                        <i class="bi bi-box-seam"></i>
                         Resources
                     </a>
                 </li>
 
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle btn btn-warning text-dark" href="#" id="reportDropdown" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                      Report Incident
+
+                <li class="nav-item">
+                    <a class="nav-link <%= currentPath.startsWith('/fixit') ? 'active' : '' %>" href="/fixit">
+                        <i class="bi bi-tools"></i>
+                        FixIt SG
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="reportDropdown">
-                        <li><a class="dropdown-item" href="/report/incident">Incident</a></li>
-                        <li><a class="dropdown-item" href="/report/fixit">FixIt</a></li>
-                    </ul>
                 </li>
+
+
             </ul>
 
-            <!-- Right Side -->
+
+
+            <!-- Right Actions -->
             <div class="ms-auto d-flex align-items-center gap-3">
 
                 <span class="system-status">
@@ -89,22 +97,32 @@
 
                 </span>
 
+
+
                 <% if (currentUser) { %>
 
+
                     <span class="system-status">
+
                         <i class="bi bi-person-check me-1"></i>
+
                         <%= currentUser.username || currentUser.name %>
+
                     </span>
+
 
                     <a class="btn btn-outline-light btn-sm report-btn" href="/profile">
                         Profile
                     </a>
 
+
                     <a class="btn btn-outline-light btn-sm report-btn" href="/auth/logout">
                         Logout
                     </a>
 
+
                 <% } else { %>
+
 
                     <a class="btn btn-primary btn-sm report-btn" href="/auth/login">
 
@@ -114,19 +132,27 @@
 
                     </a>
 
+
                     <a class="btn btn-outline-light btn-sm report-btn" href="/auth/register">
                         Register
                     </a>
 
+
                 <% } %>
+
 
             </div>
 
+
         </div>
+
 
     </div>
 
+
 </nav>
+
+
 
 <!-- Live Ticker -->
 
@@ -139,6 +165,7 @@
         LIVE
 
     </span>
+
 
     <marquee scrollamount="5">
 
