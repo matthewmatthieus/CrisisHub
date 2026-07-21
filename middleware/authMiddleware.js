@@ -16,7 +16,7 @@ function isAuthenticated(req, res, next) {
 function isAdmin(req, res, next) {
     if (!req.session.user || req.session.user.role !== 'Admin') {
         req.session.warning = 'Admin access is required for this page.';
-        return res.redirect('/dashboard');
+        return res.redirect('/');
     }
 
     return next();
@@ -28,7 +28,7 @@ function isAdmin(req, res, next) {
 function isModerator(req, res, next) {
     if (!req.session.user || !['Moderator', 'Admin'].includes(req.session.user.role)) {
         req.session.warning = 'Moderator access is required for this page.';
-        return res.redirect('/dashboard');
+        return res.redirect('/');
     }
 
     return next();

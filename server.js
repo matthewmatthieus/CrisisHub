@@ -139,11 +139,8 @@ async function refreshMatchesForOffer(offerId) {
         }
     }
 }
-app.get('/', (req, res) => {
-    res.render('index');
-});
 
-app.get('/dashboard', isAuthenticated, authController.showDashboard);
+app.get('/', isAuthenticated, authController.showDashboard);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 
@@ -412,6 +409,9 @@ app.post('/matches/:id/reject', requireLogin, async (req, res) => {
     }
 });
 app.use('/verification', verificationRoutes);
+
+console.log("=== THIS IS THE SERVER I AM RUNNING ===");
+
 app.listen(PORT, () => {
     console.log(`CrisisHub running on http://localhost:${PORT}`);
 });

@@ -20,7 +20,7 @@ function mapValidationErrors(validationErrors) {
  * Renders registration page.
  */
 function showRegister(req, res) {
-    return res.render('register', {
+    return res.render('auth/register', {
         formData: {},
         errors: {}
     });
@@ -33,7 +33,7 @@ async function register(req, res) {
     const validationErrors = validationResult(req);
 
     if (!validationErrors.isEmpty()) {
-        return res.status(422).render('register', {
+        return res.status(422).render('auth/register', {
             formData: req.body,
             errors: mapValidationErrors(validationErrors)
         });
@@ -44,7 +44,7 @@ async function register(req, res) {
     try {
         const existingEmail = await userModel.findByEmail(email);
         if (existingEmail) {
-            return res.status(409).render('register', {
+            return res.status(409).render('auth/register', {
                 formData: req.body,
                 errors: { email: 'This email is already registered.' }
             });
@@ -52,7 +52,7 @@ async function register(req, res) {
 
         const existingUsername = await userModel.findByUsername(username);
         if (existingUsername) {
-            return res.status(409).render('register', {
+            return res.status(409).render('auth/register', {
                 formData: req.body,
                 errors: { username: 'This username is already taken.' }
             });
@@ -79,10 +79,10 @@ async function register(req, res) {
         };
 
         req.session.success = 'Registration successful. Welcome to CrisisHub.';
-        return res.redirect('/dashboard');
+        return res.redirect('/');
     } catch (error) {
         console.error(error);
-        return res.status(500).render('register', {
+        return res.status(500).render('auth/register', {
             formData: req.body,
             errors: { general: 'Unable to complete registration right now.' }
         });
@@ -93,7 +93,7 @@ async function register(req, res) {
  * Renders login page.
  */
 function showLogin(req, res) {
-    return res.render('login', {
+    return res.render('auth/login', {
         formData: {},
         errors: {}
     });
@@ -106,7 +106,7 @@ async function login(req, res) {
     const validationErrors = validationResult(req);
 
     if (!validationErrors.isEmpty()) {
-        return res.status(422).render('login', {
+        return res.status(422).render('auth/login', {
             formData: req.body,
             errors: mapValidationErrors(validationErrors)
         });
@@ -118,14 +118,14 @@ async function login(req, res) {
         const user = await userModel.findByEmail(email);
 
         if (!user) {
-            return res.status(401).render('login', {
+            return res.status(401).render('auth/login', {
                 formData: req.body,
                 errors: { general: 'Invalid email or password.' }
             });
         }
 
         if (user.status === 'Suspended' || user.status === 'Banned') {
-            return res.status(403).render('login', {
+            return res.status(403).render('auth/login', {
                 formData: req.body,
                 errors: { warning: `Your account is ${user.status}. Please contact support.` }
             });
@@ -133,7 +133,7 @@ async function login(req, res) {
 
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
-            return res.status(401).render('login', {
+            return res.status(401).render('auth/login', {
                 formData: req.body,
                 errors: { general: 'Invalid email or password.' }
             });
@@ -149,10 +149,10 @@ async function login(req, res) {
 
         await activityModel.logActivity(user.id, 'Logged in');
         req.session.success = 'Login successful.';
-        return res.redirect('/dashboard');
+        return res.redirect('/');
     } catch (error) {
         console.error(error);
-        return res.status(500).render('login', {
+        return res.status(500).render('auth/login', {
             formData: req.body,
             errors: { general: 'Unable to login right now.' }
         });
@@ -186,7 +186,7 @@ async function showDashboard(req, res) {
         const user = await userModel.findById(req.session.user.user_id);
         const activity = await activityModel.getByUserId(req.session.user.user_id, 10);
 
-        return res.render('dashboard', {
+        return res.render('index', {
             user,
             activity
         });

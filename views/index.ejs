@@ -6,171 +6,185 @@
     <div class="alert alert-danger"><%= error %></div>
 <% } %>
 
-<div class="page-header">
+<div class="container-fluid py-4">
 
-    <div>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-        <h1>Emergency Operations Dashboard</h1>
+        <div>
 
-        <p>
-            Monitor community reports, verify incidents, and coordinate emergency response.
-        </p>
+            <h2 class="fw-bold mb-1">Emergency Operations Dashboard</h2>
 
-    </div>
+            <p class="text-secondary mb-0">
+                Monitor incidents, verify reports and coordinate community response.
+            </p>
 
-    <div class="page-actions">
+        </div>
 
-        <button class="btn btn-secondary">
-            <i class="fa-solid fa-filter"></i>
-            Filter
-        </button>
+        <button class="btn btn-primary px-4">
 
-        <button class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i>
+            <i class="bi bi-plus-circle me-2"></i>
+
             Report Incident
+
         </button>
 
     </div>
 
-</div>
+    <!-- Statistics -->
 
+    <div class="row g-3 mb-4">
 
-<div class="dashboard-grid">
+        <div class="col-lg-3">
 
-    <div class="stat-card">
+            <div class="stats-card">
 
-        <div class="stat-top">
+                <small>ACTIVE INCIDENTS</small>
 
-            <div>
+                <h2>12</h2>
 
-                <p class="stat-label">
-                    Active Incidents
-                </p>
-
-                <div class="stat-number">
-                    12
-                </div>
-
-                <div class="stat-change warning">
-                    ▲ +2 in the last hour
-                </div>
+                <span class="text-warning">
+                    +2 today
+                </span>
 
             </div>
 
-            <div class="stat-icon">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <div class="col-lg-3">
+
+            <div class="stats-card">
+
+                <small>CRITICAL</small>
+
+                <h2 class="text-danger">3</h2>
+
+                <span>Immediate response</span>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3">
+
+            <div class="stats-card">
+
+                <small>VERIFYING</small>
+
+                <h2 class="text-warning">5</h2>
+
+                <span>Community review</span>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3">
+
+            <div class="stats-card">
+
+                <small>RESOLVED</small>
+
+                <h2 class="text-success">27</h2>
+
+                <span>Completed today</span>
+
             </div>
 
         </div>
 
     </div>
 
-    <div class="stat-card">
+    <!-- Incident Feed -->
 
-        <div class="stat-top">
+    <div class="incident-card">
+
+        <div class="d-flex justify-content-between">
 
             <div>
 
-                <p class="stat-label">
-                    Under Verification
+                <div class="d-flex align-items-center gap-2 mb-2">
+
+                    <span class="badge bg-danger">
+                        HIGH
+                    </span>
+
+                    <span class="badge bg-success">
+                        VERIFIED
+                    </span>
+
+                </div>
+
+                <h4>🌳 Fallen Tree Blocking Road</h4>
+
+                <p class="text-secondary">
+
+                    Large tree has fallen across the road near NTU South Spine.
+                    Vehicles are unable to pass safely.
+
                 </p>
-
-                <div class="stat-number">
-                    7
-                </div>
-
-                <div class="stat-change">
-                    Community reviewing reports
-                </div>
 
             </div>
 
-            <div class="stat-icon">
-                <i class="fa-solid fa-circle-check"></i>
+            <div class="text-end">
+
+                <small class="text-secondary">
+                    Reported by
+                </small>
+
+                <br>
+
+                <strong>Community User</strong>
+
             </div>
 
         </div>
 
-    </div>
+        <div class="mt-3">
 
-    <div class="stat-card">
+            <small>Community Confidence</small>
 
-        <div class="stat-top">
+            <div class="progress mt-2">
 
-            <div>
+                <div class="progress-bar bg-primary"
+                     style="width:82%">
 
-                <p class="stat-label">
-                    Resolved Today
-                </p>
-
-                <div class="stat-number">
-                    18
-                </div>
-
-                <div class="stat-change">
-                    ✓ Response completed
                 </div>
 
             </div>
 
-            <div class="stat-icon">
-                <i class="fa-solid fa-shield-halved"></i>
+            <div class="d-flex justify-content-between mt-2">
+
+                <small>82% confidence</small>
+
+                <small>18 confirmations</small>
+
             </div>
 
         </div>
 
-    </div>
+        <div class="mt-4 d-flex gap-2">
 
-    <div class="stat-card">
+            <button class="btn btn-success">
 
-        <div class="stat-top">
+                👍 Confirm
 
-            <div>
+            </button>
 
-                <p class="stat-label">
-                    Community Reports
-                </p>
+            <button class="btn btn-outline-warning">
 
-                <div class="stat-number">
-                    156
-                </div>
+                👎 Dispute
 
-                <div class="stat-change">
-                    Submitted this week
-                </div>
+            </button>
 
-            </div>
+            <button class="btn btn-outline-light">
 
-            <div class="stat-icon">
-                <i class="fa-solid fa-users"></i>
-            </div>
+                Details
+
+            </button>
 
         </div>
 
     </div>
-
-</div>
-
-
-<div class="content-card">
-
-    <div class="card-header">
-
-        <h2>
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            Live Incident Feed
-        </h2>
-
-        <a href="#" class="view-all">
-            View All →
-        </a>
-
-    </div>
-
-    <p class="empty-state">
-        No active incidents at the moment.
-        <br><br>
-        New community reports will appear here in real time.
-    </p>
 
 </div>

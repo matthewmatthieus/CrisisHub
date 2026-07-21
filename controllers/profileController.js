@@ -37,7 +37,7 @@ async function showProfile(req, res) {
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to load profile.';
-        return res.redirect('/dashboard');
+        return res.redirect('/');
     }
 }
 
