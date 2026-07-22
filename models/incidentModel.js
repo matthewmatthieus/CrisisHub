@@ -85,6 +85,7 @@ async function updateIncident(id, incident) {
         location,
         latitude,
         longitude,
+        image,
         status
     } = incident;
 
@@ -98,6 +99,7 @@ async function updateIncident(id, incident) {
             location = ?,
             latitude = ?,
             longitude = ?,
+            image = ?,
             status = ?
         WHERE id = ?
     `, [
@@ -108,6 +110,7 @@ async function updateIncident(id, incident) {
         location,
         latitude,
         longitude,
+        image,
         status,
         id
     ]);

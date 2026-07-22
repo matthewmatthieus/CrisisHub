@@ -32,6 +32,21 @@
 
                     <div class="card shadow-sm h-100">
 
+                        <% if (incident.image) { %>
+
+                            <img
+                                src="/uploads/incidents/<%= incident.image %>"
+                                class="incident-card-image"
+                                alt="<%= incident.title %> image">
+
+                        <% } else { %>
+
+                            <div class="incident-card-image incident-card-image-empty">
+                                No image
+                            </div>
+
+                        <% } %>
+
                         <div class="card-body">
 
                             <h5><%= incident.title %></h5>
