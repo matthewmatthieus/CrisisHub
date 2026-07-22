@@ -137,6 +137,10 @@ async function updateIncident(req, res) {
 
         const uploadedImage = readIncidentImage(req);
 
+        if (incident.image && !incident.image_data && !uploadedImage) {
+            throw new Error('This legacy incident image is unavailable. Please choose a replacement image.');
+        }
+
         await incidentModel.updateIncident(req.params.id, {
             title,
             description,
@@ -158,6 +162,7 @@ async function updateIncident(req, res) {
     } catch (error) {
         console.error(error);
         req.session.error = error.message.includes('incident images')
+            || error.message.includes('legacy incident image')
             ? error.message
             : 'Unable to update incident.';
         res.redirect(`/incidents/${req.params.id}/edit`);

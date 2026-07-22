@@ -117,6 +117,8 @@
                 <div class="form-text text-secondary">
                     <% if (incident.image_data) { %>
                         Current image will be kept if no replacement is selected.
+                    <% } else if (incident.image) { %>
+                        The previous image was stored on another computer. Choose a replacement image to store it in the shared database.
                     <% } else { %>
                         Upload a PNG, JPG, GIF, or WEBP image up to 2MB.
                     <% } %>
