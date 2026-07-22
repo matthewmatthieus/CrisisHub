@@ -32,10 +32,10 @@
 
                     <div class="card shadow-sm h-100">
 
-                        <% if (incident.image) { %>
+                        <% if (incident.image_data || incident.image) { %>
 
                             <img
-                                src="/uploads/incidents/<%= incident.image %>"
+                                src="<%= incident.image_data ? `/incidents/${incident.id}/image` : `/uploads/incidents/${incident.image}` %>"
                                 class="incident-card-image"
                                 alt="<%= incident.title %> image">
 
