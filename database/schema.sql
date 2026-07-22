@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS incidents (
     title VARCHAR(150) NOT NULL,
     category VARCHAR(50) NOT NULL,
     description TEXT,
+    image VARCHAR(255),
     location VARCHAR(100) NOT NULL,
     severity ENUM('Low', 'Medium', 'High', 'Critical') NOT NULL DEFAULT 'Medium',
     status ENUM('Reported', 'Verified', 'In Progress', 'Resolved', 'Closed') NOT NULL DEFAULT 'Reported',

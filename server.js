@@ -116,6 +116,19 @@ async function ensureResourceOfferImageColumn() {
     }
 }
 
+async function ensureIncidentImageColumn() {
+    const [columns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image'`
+    );
+
+    if (columns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image VARCHAR(255) NULL AFTER description`
+        );
+    }
+}
+
 function getResourceImageUpload(req) {
     const upload = req.files && req.files.image;
 
@@ -683,7 +696,7 @@ app.post('/helpRequests/:id/delete', isAdmin, async (req, res) => {
 app.get('/api/map-items', isAuthenticated, async (req, res) => {
     try {
         const [incidentResults] = await db.execute(
-            `SELECT id, title, location, severity, status
+            `SELECT id, title, location, severity, status, image
              FROM incidents
              ORDER BY created_at DESC`
         );
@@ -710,6 +723,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             location: incident.location,
             status: incident.status,
             severity: incident.severity,
+            imageUrl: incident.image ? `/uploads/incidents/${incident.image}` : null,
             ...await resolveSingaporeLocation(incident.location)
         })));
 
@@ -1118,8 +1132,9 @@ console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 async function startServer() {
     try {
         await ensureResourceOfferImageColumn();
+        await ensureIncidentImageColumn();
     } catch (error) {
-        console.error('Unable to prepare resource offer image column:', error.message);
+        console.error('Unable to prepare image upload columns:', error.message);
     }
 
     app.listen(PORT, () => {
