@@ -78,12 +78,12 @@
 
             <% } %>
 
-            <% if (incident.image_data || incident.image) { %>
+            <% if (incident.image_data) { %>
 
                 <hr>
 
                 <img
-                    src="<%= incident.image_data ? `/incidents/${incident.id}/image` : `/uploads/incidents/${incident.image}` %>"
+                    src="/incidents/<%= incident.id %>/image"
                     class="incident-detail-image"
                     alt="<%= incident.title %> image">
 
