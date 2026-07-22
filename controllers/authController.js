@@ -17,6 +17,29 @@ function mapValidationErrors(validationErrors) {
 }
 
 /**
+ * Maps common database failures to user-friendly auth messages.
+ */
+function getAuthFailureMessage(error, fallbackMessage) {
+    if (!error) {
+        return fallbackMessage;
+    }
+
+    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+        return 'Database login failed. Please check DB_USER and DB_PASSWORD in your environment settings.';
+    }
+
+    if (error.code === 'ER_BAD_DB_ERROR') {
+        return 'Database not found. Please check DB_NAME in your environment settings.';
+    }
+
+    if ((error.message || '').toLowerCase().includes('self-signed certificate')) {
+        return 'Database SSL certificate issue. If you are using local MySQL, set DB_SSL=false.';
+    }
+
+    return fallbackMessage;
+}
+
+/**
  * Renders registration page.
  */
 function showRegister(req, res) {
@@ -84,7 +107,12 @@ async function register(req, res) {
         console.error(error);
         return res.status(500).render('auth/register', {
             formData: req.body,
-            errors: { general: 'Unable to complete registration right now.' }
+            errors: {
+                general: getAuthFailureMessage(
+                    error,
+                    'Unable to complete registration right now.'
+                )
+            }
         });
     }
 }
@@ -154,7 +182,12 @@ async function login(req, res) {
         console.error(error);
         return res.status(500).render('auth/login', {
             formData: req.body,
-            errors: { general: 'Unable to login right now.' }
+            errors: {
+                general: getAuthFailureMessage(
+                    error,
+                    'Unable to login right now.'
+                )
+            }
         });
     }
 }
