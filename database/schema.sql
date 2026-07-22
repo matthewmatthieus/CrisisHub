@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS incidents (
     category VARCHAR(50) NOT NULL,
     description TEXT,
     image VARCHAR(255),
+    image_data MEDIUMBLOB,
+    image_mime_type VARCHAR(100),
     location VARCHAR(100) NOT NULL,
     severity ENUM('Low', 'Medium', 'High', 'Critical') NOT NULL DEFAULT 'Medium',
     status ENUM('Reported', 'Verified', 'In Progress', 'Resolved', 'Closed') NOT NULL DEFAULT 'Reported',

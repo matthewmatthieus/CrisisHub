@@ -1,9 +1,5 @@
-const path = require('path');
-const fs = require('fs/promises');
 const incidentModel = require('../models/incidentModel');
 
-const incidentUploadDir = path.join(__dirname, '..', 'public', 'uploads', 'incidents');
-const allowedIncidentImageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 const allowedIncidentImageMimeTypes = new Set([
     'image/png',
     'image/jpeg',
@@ -13,62 +9,30 @@ const allowedIncidentImageMimeTypes = new Set([
 
 function getIncidentImageUpload(req) {
     const upload = req.files && req.files.image;
-
-    if (!upload) {
-        return null;
-    }
-
-    return Array.isArray(upload) ? upload[0] : upload;
+    return upload ? (Array.isArray(upload) ? upload[0] : upload) : null;
 }
 
-async function saveIncidentImage(req) {
+function readIncidentImage(req) {
     const upload = getIncidentImageUpload(req);
 
     if (!upload || !upload.name) {
         return null;
     }
 
-    const extension = path.extname(upload.name).toLowerCase();
-
-    if (!allowedIncidentImageExtensions.has(extension)
-        || !allowedIncidentImageMimeTypes.has(upload.mimetype)) {
+    if (!allowedIncidentImageMimeTypes.has(upload.mimetype)) {
         throw new Error('Only PNG, JPG, JPEG, GIF and WEBP incident images are allowed.');
     }
 
-    await fs.mkdir(incidentUploadDir, { recursive: true });
-
-    const safeBaseName = path.basename(upload.name, extension)
-        .replace(/[^a-zA-Z0-9_-]/g, '_')
-        .slice(0, 60) || 'incident';
-    const filename = `${Date.now()}_${safeBaseName}${extension}`;
-
-    await upload.mv(path.join(incidentUploadDir, filename));
-    return filename;
+    return {
+        data: upload.data,
+        mimeType: upload.mimetype
+    };
 }
 
-async function removeIncidentImage(filename) {
-    if (!filename) {
-        return;
-    }
-
-    try {
-        await fs.unlink(path.join(incidentUploadDir, filename));
-    } catch (error) {
-        if (error.code !== 'ENOENT') {
-            console.error('Unable to remove incident image:', error.message);
-        }
-    }
-}
-
-// Display all incidents
 async function showAllIncidents(req, res) {
     try {
         const incidents = await incidentModel.getAllIncidents();
-
-        res.render('incidents/index', {
-            incidents
-        });
-
+        res.render('incidents/index', { incidents });
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to load incidents.';
@@ -76,26 +40,14 @@ async function showAllIncidents(req, res) {
     }
 }
 
-// Display create form
 function showCreateForm(req, res) {
     res.render('incidents/create');
 }
 
-// Create incident
 async function createIncident(req, res) {
-    let image = null;
-
     try {
-
-        const {
-            title,
-            description,
-            category,
-            severity,
-            location
-        } = req.body;
-
-        image = await saveIncidentImage(req);
+        const { title, description, category, severity, location } = req.body;
+        const uploadedImage = readIncidentImage(req);
 
         await incidentModel.createIncident({
             title,
@@ -105,16 +57,16 @@ async function createIncident(req, res) {
             location,
             latitude: null,
             longitude: null,
-            image,
+            image: null,
+            image_data: uploadedImage ? uploadedImage.data : null,
+            image_mime_type: uploadedImage ? uploadedImage.mimeType : null,
             user_id: req.session.user.id
         });
 
         req.session.success = 'Incident reported successfully.';
         res.redirect('/incidents');
-
     } catch (error) {
         console.error(error);
-        await removeIncidentImage(image);
         req.session.error = error.message.includes('incident images')
             ? error.message
             : 'Unable to report incident.';
@@ -122,10 +74,8 @@ async function createIncident(req, res) {
     }
 }
 
-// Display single incident
 async function showIncident(req, res) {
     try {
-
         const incident = await incidentModel.getIncidentById(req.params.id);
 
         if (!incident) {
@@ -133,10 +83,7 @@ async function showIncident(req, res) {
             return res.redirect('/incidents');
         }
 
-        res.render('incidents/details', {
-            incident
-        });
-
+        res.render('incidents/details', { incident });
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to load incident.';
@@ -144,10 +91,25 @@ async function showIncident(req, res) {
     }
 }
 
-// Display edit form
+async function showIncidentImage(req, res) {
+    try {
+        const image = await incidentModel.getIncidentImage(req.params.id);
+
+        if (!image || !image.image_data) {
+            return res.sendStatus(404);
+        }
+
+        res.type(image.image_mime_type || 'application/octet-stream');
+        res.set('Cache-Control', 'private, max-age=300');
+        return res.send(image.image_data);
+    } catch (error) {
+        console.error(error);
+        return res.sendStatus(500);
+    }
+}
+
 async function showEditForm(req, res) {
     try {
-
         const incident = await incidentModel.getIncidentById(req.params.id);
 
         if (!incident) {
@@ -155,10 +117,7 @@ async function showEditForm(req, res) {
             return res.redirect('/incidents');
         }
 
-        res.render('incidents/edit', {
-            incident
-        });
-
+        res.render('incidents/edit', { incident });
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to load incident.';
@@ -166,21 +125,9 @@ async function showEditForm(req, res) {
     }
 }
 
-// Update incident
 async function updateIncident(req, res) {
-    let image = null;
-
     try {
-
-        const {
-            title,
-            description,
-            category,
-            severity,
-            location,
-            status
-        } = req.body;
-
+        const { title, description, category, severity, location, status } = req.body;
         const incident = await incidentModel.getIncidentById(req.params.id);
 
         if (!incident) {
@@ -188,8 +135,7 @@ async function updateIncident(req, res) {
             return res.redirect('/incidents');
         }
 
-        image = await saveIncidentImage(req);
-        const nextImage = image || incident.image || null;
+        const uploadedImage = readIncidentImage(req);
 
         await incidentModel.updateIncident(req.params.id, {
             title,
@@ -199,20 +145,18 @@ async function updateIncident(req, res) {
             location,
             latitude: null,
             longitude: null,
-            image: nextImage,
+            image: uploadedImage ? null : incident.image || null,
+            image_data: uploadedImage ? uploadedImage.data : incident.image_data || null,
+            image_mime_type: uploadedImage
+                ? uploadedImage.mimeType
+                : incident.image_mime_type || null,
             status
         });
 
-        if (image && incident.image) {
-            await removeIncidentImage(incident.image);
-        }
-
         req.session.success = 'Incident updated successfully.';
         res.redirect('/incidents');
-
     } catch (error) {
         console.error(error);
-        await removeIncidentImage(image);
         req.session.error = error.message.includes('incident images')
             ? error.message
             : 'Unable to update incident.';
@@ -220,20 +164,11 @@ async function updateIncident(req, res) {
     }
 }
 
-// Delete incident
 async function deleteIncident(req, res) {
     try {
-        const incident = await incidentModel.getIncidentById(req.params.id);
-
         await incidentModel.deleteIncident(req.params.id);
-
-        if (incident) {
-            await removeIncidentImage(incident.image);
-        }
-
         req.session.success = 'Incident deleted successfully.';
         res.redirect('/incidents');
-
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to delete incident.';
@@ -246,6 +181,7 @@ module.exports = {
     showCreateForm,
     createIncident,
     showIncident,
+    showIncidentImage,
     showEditForm,
     updateIncident,
     deleteIncident

@@ -127,6 +127,28 @@ async function ensureIncidentImageColumn() {
              ADD COLUMN image VARCHAR(255) NULL AFTER description`
         );
     }
+
+    const [dataColumns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image_data'`
+    );
+
+    if (dataColumns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image_data MEDIUMBLOB NULL AFTER image`
+        );
+    }
+
+    const [mimeColumns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image_mime_type'`
+    );
+
+    if (mimeColumns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image_mime_type VARCHAR(100) NULL AFTER image_data`
+        );
+    }
 }
 
 function getResourceImageUpload(req) {
@@ -696,7 +718,8 @@ app.post('/helpRequests/:id/delete', isAdmin, async (req, res) => {
 app.get('/api/map-items', isAuthenticated, async (req, res) => {
     try {
         const [incidentResults] = await db.execute(
-            `SELECT id, title, location, severity, status, image
+            `SELECT id, title, location, severity, status, image,
+                    image_data IS NOT NULL AS has_image
              FROM incidents
              ORDER BY created_at DESC`
         );
@@ -723,7 +746,9 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             location: incident.location,
             status: incident.status,
             severity: incident.severity,
-            imageUrl: incident.image ? `/uploads/incidents/${incident.image}` : null,
+            imageUrl: incident.has_image
+                ? `/incidents/${incident.id}/image`
+                : (incident.image ? `/uploads/incidents/${incident.image}` : null),
             ...await resolveSingaporeLocation(incident.location)
         })));
 
