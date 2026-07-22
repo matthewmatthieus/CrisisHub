@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
     status ENUM('Active', 'Suspended', 'Banned') NOT NULL DEFAULT 'Active',
     reputation_score INT NOT NULL DEFAULT 50,
     profile_picture VARCHAR(255) DEFAULT NULL,
+    email_verified BOOLEAN NOT NULL DEFAULT TRUE,
+    verification_token_hash VARCHAR(255) DEFAULT NULL,
+    verification_token_expires_at DATETIME DEFAULT NULL,
+    verification_email_sent_at DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -33,6 +37,19 @@ CREATE TABLE IF NOT EXISTS user_activity (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_user_activity_user_created (user_id, created_at),
     CONSTRAINT fk_user_activity_user FOREIGN KEY (user_id)
+        REFERENCES users(user_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_password_reset_token_hash (token_hash),
+    CONSTRAINT fk_password_reset_user FOREIGN KEY (user_id)
         REFERENCES users(user_id)
         ON DELETE CASCADE
 );

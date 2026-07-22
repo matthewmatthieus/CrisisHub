@@ -3,6 +3,10 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    email_verified BOOLEAN NOT NULL DEFAULT TRUE,
+    verification_token_hash VARCHAR(255),
+    verification_token_expires_at DATETIME,
+    verification_email_sent_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -71,4 +75,15 @@ CREATE TABLE IF NOT EXISTS fulfillments (
     fulfilled_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_password_reset_token_hash (token_hash),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

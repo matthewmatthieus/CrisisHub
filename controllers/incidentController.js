@@ -1,4 +1,7 @@
 const incidentModel = require('../models/incidentModel');
+const userModel = require('../models/userModel');
+const { sendIncidentStatusEmail } = require('../services/emailService');
+const { sendAdminAlertEmail } = require('../services/emailService');
 
 const allowedIncidentImageMimeTypes = new Set([
     'image/png',
@@ -62,6 +65,14 @@ async function createIncident(req, res) {
             image_mime_type: uploadedImage ? uploadedImage.mimeType : null,
             user_id: req.session.user.id
         });
+
+        if (['High', 'Critical'].includes(severity)) {
+            userModel.getAdminEmails()
+                .then((adminEmails) => adminEmails.length
+                    ? sendAdminAlertEmail({ adminEmails, alertType: 'high_priority_incident' })
+                    : null)
+                .catch((emailError) => console.error('Unable to send incident admin alert:', emailError.message));
+        }
 
         req.session.success = 'Incident reported successfully.';
         res.redirect('/incidents');
@@ -156,6 +167,24 @@ async function updateIncident(req, res) {
                 : incident.image_mime_type || null,
             status
         });
+
+        if (incident.email && incident.status !== status) {
+            const notificationStatus = {
+                Active: 'under_review',
+                Verified: 'verified',
+                Resolved: 'resolved',
+                Closed: 'resolved'
+            }[status];
+
+            if (notificationStatus) {
+                sendIncidentStatusEmail({
+                    email: incident.email,
+                    name: incident.username,
+                    incidentId: incident.id,
+                    status: notificationStatus
+                }).catch((emailError) => console.error('Unable to send incident status email:', emailError.message));
+            }
+        }
 
         req.session.success = 'Incident updated successfully.';
         res.redirect('/incidents');
