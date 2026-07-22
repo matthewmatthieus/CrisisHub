@@ -98,11 +98,11 @@
                     Image
                 </label>
 
-                <% if (incident.image_data || incident.image) { %>
+                <% if (incident.image_data) { %>
 
                     <div class="incident-current-image mb-3">
                         <img
-                            src="<%= incident.image_data ? `/incidents/${incident.id}/image` : `/uploads/incidents/${incident.image}` %>"
+                            src="/incidents/<%= incident.id %>/image"
                             alt="<%= incident.title %> image">
                     </div>
 
@@ -115,8 +115,10 @@
                     accept="image/png,image/jpeg,image/gif,image/webp">
 
                 <div class="form-text text-secondary">
-                    <% if (incident.image_data || incident.image) { %>
+                    <% if (incident.image_data) { %>
                         Current image will be kept if no replacement is selected.
+                    <% } else if (incident.image) { %>
+                        The previous image was stored on another computer. Choose a replacement image to store it in the shared database.
                     <% } else { %>
                         Upload a PNG, JPG, GIF, or WEBP image up to 2MB.
                     <% } %>

@@ -17,6 +17,7 @@ const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const resourceUploadDir = path.join(__dirname, 'public', 'uploads', 'resources');
+const incidentUploadDir = path.join(__dirname, 'public', 'uploads', 'incidents');
 const allowedResourceImageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 const allowedResourceImageMimeTypes = new Set([
     'image/png',
@@ -159,6 +160,47 @@ async function ensureIncidentImageColumn() {
             `ALTER TABLE incidents
              ADD COLUMN image_mime_type VARCHAR(100) NULL AFTER image_data`
         );
+    }
+
+    await migrateLegacyIncidentImages();
+}
+
+async function migrateLegacyIncidentImages() {
+    const [legacyIncidents] = await db.execute(
+        `SELECT id, image
+         FROM incidents
+         WHERE image IS NOT NULL AND image_data IS NULL`
+    );
+
+    const mimeTypes = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+    };
+
+    for (const incident of legacyIncidents) {
+        const filename = path.basename(incident.image);
+        const mimeType = mimeTypes[path.extname(filename).toLowerCase()];
+
+        if (!mimeType) {
+            continue;
+        }
+
+        try {
+            const imageData = await fs.readFile(path.join(incidentUploadDir, filename));
+            await db.execute(
+                `UPDATE incidents
+                 SET image_data = ?, image_mime_type = ?, image = NULL
+                 WHERE id = ? AND image_data IS NULL`,
+                [imageData, mimeType, incident.id]
+            );
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                console.error(`Unable to migrate incident image ${filename}:`, error.message);
+            }
+        }
     }
 }
 
@@ -769,9 +811,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             location: incident.location,
             status: incident.status,
             severity: incident.severity,
-            imageUrl: incident.has_image
-                ? `/incidents/${incident.id}/image`
-                : (incident.image ? `/uploads/incidents/${incident.image}` : null),
+            imageUrl: incident.has_image ? `/incidents/${incident.id}/image` : null,
             ...await resolveSingaporeLocation(incident.location)
         })));
 
