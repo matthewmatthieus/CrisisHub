@@ -1,0 +1,85 @@
+<div class="container mt-4">
+
+    <h2>Edit Report</h2>
+
+    <form action="/fixit/<%= report.id %>/edit" method="POST">
+
+        <div class="mb-3">
+            <label>Title</label>
+            <input class="form-control" name="title" value="<%= report.title %>">
+        </div>
+
+        <div class="mb-3">
+            <label>Description</label>
+
+            <textarea class="form-control" name="description"><%= report.description %></textarea>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Category</label>
+
+            <input class="form-control" name="category" value="<%= report.category %>">
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Severity</label>
+
+            <select class="form-control" name="severity">
+
+                <option value="Low" <%=report.severity==="Low" ?"selected":"" %>>
+                    Low
+                </option>
+
+                <option value="Medium" <%=report.severity==="Medium" ?"selected":"" %>>
+                    Medium
+                </option>
+
+                <option value="High" <%=report.severity==="High" ?"selected":"" %>>
+                    High
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Location</label>
+
+            <input class="form-control" name="location" value="<%= report.location %>">
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Status</label>
+
+            <select class="form-control" name="status">
+
+                <option value="Open" <%=report.status==="Open" ?"selected":"" %>>
+                    Open
+                </option>
+
+                <option value="In Progress" <%=report.status==="In Progress" ?"selected":"" %>>
+                    In Progress
+                </option>
+
+                <option value="Resolved" <%=report.status==="Resolved" ?"selected":"" %>>
+                    Resolved
+                </option>
+
+            </select>
+
+        </div>
+
+        <button class="btn btn-success">
+            Save
+        </button>
+
+    </form>
+
+</div>

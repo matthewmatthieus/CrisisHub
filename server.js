@@ -10,14 +10,14 @@ const verificationRoutes = require('./routes/verification');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
+const fixitRoutes = require('./routes/fixitRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
 const { sendHelpRequestUpdateEmail } = require('./services/emailService');
 
 const app = express();
-const isProduction = process.env.NODE_ENV === 'production';
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = process.env.PORT || 3000;
 const resourceUploadDir = path.join(__dirname, 'public', 'uploads', 'resources');
 const incidentUploadDir = path.join(__dirname, 'public', 'uploads', 'incidents');
 const allowedResourceImageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
@@ -29,7 +29,6 @@ const allowedResourceImageMimeTypes = new Set([
 ]);
 
 // Middleware
-app.set('trust proxy', 1);
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -42,27 +41,10 @@ app.use(fileUpload({
     }
 }));
 app.use(session({
-    secret: process.env.SESSION_SECRET || (isProduction ? undefined : 'crisishub-dev-secret'),
+    secret: process.env.SESSION_SECRET || 'crisishub-dev-secret',
     resave: false,
-    saveUninitialized: false,
-    proxy: isProduction,
-    cookie: {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: isProduction,
-        maxAge: 1000 * 60 * 60 * 8
-    }
+    saveUninitialized: false
 }));
-
-app.get('/health', async (req, res) => {
-    try {
-        await db.query('SELECT 1');
-        return res.json({ status: 'ok' });
-    } catch (error) {
-        console.error('Health check failed:', error.message);
-        return res.status(503).json({ status: 'unavailable' });
-    }
-});
 
 // View Engine
 app.set('view engine', 'ejs');
@@ -102,19 +84,10 @@ app.use(async (req, res, next) => {
         const [[incidentCount]] = await db.execute(
             'SELECT COUNT(*) AS count FROM incidents'
         );
-        let fixitCount = { count: 0 };
-
-        if (await tableExists('fixit_reports')) {
-            const [[row]] = await db.execute(
-                'SELECT COUNT(*) AS count FROM fixit_reports'
-            );
-            fixitCount = row;
-        }
 
         res.locals.sidebarCounts.resourceOffers = resourceCount.count;
         res.locals.sidebarCounts.helpRequests = helpRequestCount.count;
         res.locals.sidebarCounts.incidents = incidentCount.count;
-        res.locals.sidebarCounts.fixit = fixitCount.count;
         res.locals.sidebarCounts.allReports = resourceCount.count + helpRequestCount.count + incidentCount.count;
     } catch (error) {
         console.error('Unable to load sidebar counts:', error.message);
@@ -146,35 +119,6 @@ async function ensureResourceOfferImageColumn() {
              ADD COLUMN image_filename VARCHAR(255) NULL AFTER notes`
         );
     }
-}
-
-async function ensureResourceOfferExpiryColumn() {
-    const [columns] = await db.execute(
-        `SHOW COLUMNS FROM resource_offers LIKE 'expires_at'`
-    );
-
-    if (columns.length === 0) {
-        await db.execute(
-            `ALTER TABLE resource_offers
-             ADD COLUMN expires_at DATETIME NULL AFTER image_filename`
-        );
-    }
-}
-
-function getResourceExpiry(body) {
-    const expiresSoon = body.expiresSoon === '1';
-    const rawExpiry = String(body.expiresAt || '').trim();
-
-    if (!expiresSoon) {
-        return null;
-    }
-
-    const expiryDate = new Date(rawExpiry);
-    if (!rawExpiry || Number.isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
-        throw new Error('Please provide a future expiry date and time.');
-    }
-
-    return rawExpiry;
 }
 
 async function ensureIncidentImageColumn() {
@@ -518,6 +462,7 @@ app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 app.use('/verification', verificationRoutes);
 app.use('/incidents', incidentRoutes);
+app.use('/fixit', fixitRoutes);
 app.use('/admin', adminRoutes);
 
 app.get('/incidents', requireLogin, async (req, res) => {
@@ -660,62 +605,9 @@ app.post('/incidents/:id/delete', isAdmin, async (req, res) => {
     }
 });
 
-// =====================
-// FixIt Routes
-// =====================
-
-// Show all FixIt reports
-app.get("/fixit", async (req, res) => {
-  try {
-    const result = await db.query("SELECT * FROM fixit_reports ORDER BY created_at DESC");
-    res.render("fixit/index", { fixitReports: result.rows });
-  } catch (err) {
-    console.error(err);
-    res.render("fixit/index", { fixitReports: [], error: "Unable to load FixIt reports" });
-  }
-});
-
-// Show a single FixIt report
-app.get("/fixit/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await db.query("SELECT * FROM fixit_reports WHERE id = $1", [id]);
-    res.render("fixit/show", { fixit: result.rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.redirect("/fixit");
-  }
-});
-
-// Show FixIt form
-app.get("/report/fixit", (req, res) => {
-  res.render("fixit/form");
-});
-
-//Show Incident form
-app.get("incidents/create", (req, res) => {
-  res.render("incidents/form"); // views/incidents/form.ejs
-});
-
-// Handle FixIt form submission
-app.post("/api/fixit", async (req, res) => {
-  try {
-    const { title, category, location, severity, description } = req.body;
-
-    await db.query(
-      "INSERT INTO fixit_reports (title, category, location, severity, description) VALUES ($1, $2, $3, $4, $5)",
-      [title, category, location, severity, description]
-    );
-
-    res.redirect("/fixit");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Failed to submit FixIt issue");
-  }
-});
 
 
-
+// Help Requests Routes
 app.get('/helpRequests', requireLogin, async (req, res) => {
     try {
         const [requests] = await db.execute(
@@ -900,7 +792,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
                  ORDER BY created_at DESC`
             ),
             db.execute(
-                `SELECT id, item_name, category, quantity, location, status, image_filename, expires_at
+                `SELECT id, item_name, category, quantity, location, status, image_filename
                  FROM resource_offers
                  ORDER BY created_at DESC`
             )
@@ -941,7 +833,6 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             category: offer.category,
             quantity: offer.quantity,
             imageUrl: offer.image_filename ? `/uploads/resources/${offer.image_filename}` : null,
-            expiresAt: offer.expires_at,
             ...await resolveSingaporeLocation(offer.location)
         })));
 
@@ -1041,13 +932,12 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
     }
 
     try {
-        const expiresAt = getResourceExpiry(req.body);
         imageFilename = await saveResourceOfferImage(req);
 
         const [result] = await db.execute(
             `INSERT INTO resource_offers
-                (user_id, category, item_name, quantity, location, notes, image_filename, expires_at, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Available')`,
+                (user_id, category, item_name, quantity, location, notes, image_filename, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Available')`,
             [
                 req.session.user.id,
                 category,
@@ -1055,8 +945,7 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
                 quantity,
                 location.trim(),
                 notes || null,
-                imageFilename,
-                expiresAt
+                imageFilename
             ]
         );
 
@@ -1163,13 +1052,12 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
             return res.redirect('/resourceOffers');
         }
 
-        const expiresAt = getResourceExpiry(req.body);
         imageFilename = await saveResourceOfferImage(req);
         const nextImageFilename = imageFilename || offer.image_filename || null;
 
         const [result] = await db.execute(
             `UPDATE resource_offers
-             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, image_filename = ?, expires_at = ?, status = ?
+             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, image_filename = ?, status = ?
              WHERE id = ?`,
             [
                 category,
@@ -1178,7 +1066,6 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
                 location.trim(),
                 notes || null,
                 nextImageFilename,
-                expiresAt,
                 status,
                 req.params.id
             ]
@@ -1323,34 +1210,21 @@ app.post('/matches/:id/reject', requireLogin, async (req, res) => {
         res.redirect('/resourceOffers');
     }
 });
-app.use('/verification', verificationRoutes);
 
 console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
 async function startServer() {
     try {
-        if (isProduction && !process.env.SESSION_SECRET) {
-            throw new Error('SESSION_SECRET must be configured in production.');
-        }
-
-        if (isProduction && !process.env.APP_URL) {
-            throw new Error('APP_URL must be configured in production.');
-        }
-
-        if (isProduction && (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD)) {
-            throw new Error('GMAIL_USER and GMAIL_APP_PASSWORD must be configured in production.');
-        }
-
         await ensureEmailTables();
         await ensureResourceOfferImageColumn();
-        await ensureResourceOfferExpiryColumn();
         await ensureIncidentImageColumn();
     } catch (error) {
         console.error('Unable to prepare image upload columns:', error.message);
     }
 
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`CrisisHub running on port ${PORT}`);
+    console.log("=== FIXIT ROUTES LOADED ===");
+    app.listen(PORT, () => {
+        console.log(`CrisisHub running on http://localhost:${PORT}`);
     });
 }
 

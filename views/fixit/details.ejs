@@ -1,0 +1,93 @@
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2><%= report.title %></h2>
+
+        <span class="badge bg-primary">
+            <%= report.status %>
+        </span>
+
+    </div>
+
+    <% if (report.image_data) { %>
+
+        <img
+            src="/fixit/<%= report.id %>/image"
+            class="img-fluid rounded mb-4"
+            style="max-height:400px;">
+
+    <% } %>
+
+    <table class="table table-bordered">
+
+        <tr>
+            <th width="180">Category</th>
+            <td><%= report.category %></td>
+        </tr>
+
+        <tr>
+            <th>Severity</th>
+            <td><%= report.severity %></td>
+        </tr>
+
+        <tr>
+            <th>Location</th>
+            <td><%= report.location %></td>
+        </tr>
+
+        <tr>
+            <th>Reported By</th>
+            <td><%= report.username %></td>
+        </tr>
+
+        <tr>
+            <th>Created</th>
+            <td><%= new Date(report.created_at).toLocaleString() %></td>
+        </tr>
+
+        <tr>
+            <th>Description</th>
+            <td>
+                <%= report.description %>
+            </td>
+        </tr>
+
+    </table>
+
+    <div class="mt-4">
+
+        <a
+            href="/fixit"
+            class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+        <a
+            href="/fixit/<%= report.id %>/edit"
+            class="btn btn-warning">
+
+            Edit
+
+        </a>
+
+        <form
+            action="/fixit/<%= report.id %>/delete"
+            method="POST"
+            style="display:inline;">
+
+            <button
+                class="btn btn-danger"
+                onclick="return confirm('Delete this report?')">
+
+                Delete
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
