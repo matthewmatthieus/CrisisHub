@@ -8,6 +8,7 @@ const passwordResetModel = require('../models/passwordResetModel');
 const { createSecureToken, hashToken } = require('../services/tokenService');
 const {
     sendVerificationEmail,
+    sendRegistrationThanksEmail,
     sendWelcomeEmail,
     sendProductBriefEmail,
     sendPasswordResetEmail
@@ -110,11 +111,14 @@ async function register(req, res) {
         const { token, tokenHash } = createSecureToken();
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
         await userModel.updateVerificationToken(userId, tokenHash, expiresAt);
+        const verificationUrl = appUrl(`/auth/verify-email/${token}`);
         await sendVerificationEmail({
             email,
             name: username,
-            verificationUrl: appUrl(`/auth/verify-email/${token}`)
+            verificationUrl
         });
+        await sendRegistrationThanksEmail({ email, name: username, verificationUrl });
+        await sendProductBriefEmail({ email, name: username });
 
         return res.render('auth/verify-pending', {
             email,
@@ -265,7 +269,6 @@ async function verifyEmail(req, res) {
         await userModel.markEmailVerified(user.id);
         try {
             await sendWelcomeEmail({ email: user.email, name: user.username });
-            await sendProductBriefEmail({ email: user.email, name: user.username });
         } catch (emailError) {
             console.error(emailError);
         }

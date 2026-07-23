@@ -64,6 +64,9 @@ function actionEmail({ email, name, subject, message, buttonText, url }) {
 async function sendVerificationEmail({ email, name, verificationUrl }) {
     return actionEmail({ email, name, subject: 'Verify your CrisisHub email', message: 'Please verify your email address to activate your CrisisHub account.', buttonText: 'Verify email', url: verificationUrl });
 }
+async function sendRegistrationThanksEmail({ email, name, verificationUrl }) {
+    return actionEmail({ email, name, subject: 'Thanks for joining CrisisHub', message: 'Thanks for creating a CrisisHub account. Verify your email to activate your account and start helping your community.', buttonText: 'Verify my email', url: verificationUrl });
+}
 async function sendWelcomeEmail({ email, name }) {
     return actionEmail({ email, name, subject: 'Welcome to CrisisHub', message: 'Your CrisisHub account has been verified successfully. You can now report incidents, request help, access community resources and follow verified community updates.', buttonText: 'Open CrisisHub', url: process.env.APP_URL || 'http://localhost:3000' });
 }
@@ -108,4 +111,4 @@ async function sendAdminAlertEmail({ adminEmails, alertType }) {
     return sendEmail({ to: adminEmails, subject: content[0], html: `<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>${escapeHtml(content[0])}</h2><p>${escapeHtml(content[1])}</p><p><a href="${escapeHtml(process.env.APP_URL || 'http://localhost:3000')}">Open CrisisHub</a></p></div>` });
 }
 
-module.exports = { sendVerificationEmail, sendWelcomeEmail, sendProductBriefEmail, sendPasswordResetEmail, sendIncidentStatusEmail, sendHelpRequestUpdateEmail, sendAdminAlertEmail };
+module.exports = { sendVerificationEmail, sendRegistrationThanksEmail, sendWelcomeEmail, sendProductBriefEmail, sendPasswordResetEmail, sendIncidentStatusEmail, sendHelpRequestUpdateEmail, sendAdminAlertEmail };
