@@ -46,7 +46,6 @@
             <span class="sidebar-count"><%= sidebarCounts.verification %></span>
         </a>
 
-        <!-- ✅ New FixIt SG option -->
         <a href="/fixit" class="sidebar-link <%= currentPath.startsWith('/fixit') ? 'active' : '' %>">
             <div class="sidebar-left">
                 <i class="bi bi-tools text-primary"></i>
@@ -57,9 +56,12 @@
 
     </div>
 
+    <% if (currentUser && currentUser.role && currentUser.role.toLowerCase() === 'admin') { %>
+
     <div class="sidebar-divider"></div>
 
     <div class="sidebar-section">
+
         <div class="sidebar-title">
             ADMIN
         </div>
@@ -112,6 +114,9 @@
                 <span>Statistics</span>
             </div>
         </a>
+
     </div>
+
+    <% } %>
 
 </aside>
