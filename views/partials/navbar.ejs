@@ -37,10 +37,8 @@
 
         <div class="collapse navbar-collapse" id="navbarContent">
 
-
             <!-- Main Navigation -->
             <ul class="navbar-nav ms-4">
-
 
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath === '/' && !currentMapType ? 'active' : '' %>" href="/">
@@ -49,14 +47,12 @@
                     </a>
                 </li>
 
-
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath.startsWith('/incidents') ? 'active' : '' %>" href="/incidents">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         Incidents
                     </a>
                 </li>
-
 
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath.startsWith('/helpRequests') ? 'active' : '' %>" href="/helpRequests">
@@ -65,14 +61,12 @@
                     </a>
                 </li>
 
-
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath.startsWith('/resourceOffers') ? 'active' : '' %>" href="/resourceOffers">
                         <i class="bi bi-box-seam"></i>
                         Resources
                     </a>
                 </li>
-
 
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath.startsWith('/fixit') ? 'active' : '' %>" href="/fixit">
@@ -81,26 +75,19 @@
                     </a>
                 </li>
 
-
             </ul>
-
 
 
             <!-- Right Actions -->
             <div class="ms-auto d-flex align-items-center gap-3">
 
                 <span class="system-status">
-
                     <span class="status-dot"></span>
-
                     System Online
-
                 </span>
 
 
-
                 <% if (currentUser) { %>
-
 
                     <span class="system-status">
 
@@ -123,7 +110,6 @@
 
                 <% } else { %>
 
-
                     <a class="btn btn-primary btn-sm report-btn" href="/auth/login">
 
                         <i class="bi bi-person-check me-1"></i>
@@ -137,21 +123,15 @@
                         Register
                     </a>
 
-
                 <% } %>
-
 
             </div>
 
-
         </div>
-
 
     </div>
 
-
 </nav>
-
 
 
 <!-- Live Ticker -->
@@ -166,11 +146,76 @@
 
     </span>
 
+    <marquee scrollamount="5" id="liveTicker">
 
-    <marquee scrollamount="5">
-
-        Fallen tree reported near NTU • Flash flood along Bukit Timah Road • Phishing scam targeting elderly • Streetlight outage at Jurong West
+        Loading latest incidents...
 
     </marquee>
 
 </div>
+
+
+<script>
+
+    async function loadLiveIncidents() {
+
+        const ticker = document.getElementById('liveTicker');
+
+        try {
+
+            const response = await fetch('/api/live-incidents');
+
+            if (!response.ok) {
+
+                throw new Error(`HTTP error: ${response.status}`);
+
+            }
+
+            const incidents = await response.json();
+
+
+            if (!incidents || incidents.length === 0) {
+
+                ticker.textContent = 'No recent incidents reported.';
+
+                return;
+
+            }
+
+
+            ticker.innerHTML = incidents
+
+                .map(incident => `
+
+                    <span style="cursor: pointer;"
+                          onclick="window.location.href='/incidents/${incident.id}'">
+
+                        ${incident.title} near ${incident.location}
+                        (${incident.status})
+
+                    </span>
+
+                `)
+
+                .join(' &nbsp; • &nbsp; ');
+
+
+        } catch (error) {
+
+            console.error('Unable to load live incidents:', error);
+
+            ticker.textContent = 'Unable to load latest incidents.';
+
+        }
+
+    }
+
+
+    // Load incidents immediately
+    loadLiveIncidents();
+
+
+    // Refresh every 30 seconds
+    setInterval(loadLiveIncidents, 30000);
+
+</script>

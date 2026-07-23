@@ -2461,4 +2461,16 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
     }
 
 }
->>>>>>> 409070a (Add admin operations dashboard)
+
+.live-ticker-link {
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.live-ticker-link:hover {
+    color: var(--primary);
+}
+
+.live-separator {
+    color: var(--text-muted);
+}

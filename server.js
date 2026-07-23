@@ -1211,6 +1211,31 @@ app.post('/matches/:id/reject', requireLogin, async (req, res) => {
     }
 });
 
+app.get('/api/live-incidents', isAuthenticated, async (req, res) => {
+
+    try {
+
+        const [incidents] = await db.execute(
+            `SELECT id, title, location, status
+             FROM incidents
+             ORDER BY created_at DESC
+             LIMIT 10`
+        );
+
+        res.json(incidents);
+
+    } catch (error) {
+
+        console.error('Unable to load live incidents:', error);
+
+        res.status(500).json({
+            error: 'Unable to load live incidents.'
+        });
+
+    }
+
+});
+
 console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
 async function startServer() {

@@ -1,92 +1,131 @@
-<div class="container mt-4">
+<div class="container-fluid py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="/fixit" class="btn btn-outline-secondary mb-4">
+        <i class="bi bi-arrow-left"></i>
+        Back to FixIt Reports
+    </a>
 
-        <h2><%= report.title %></h2>
+    <div class="card">
 
-        <span class="badge bg-primary">
-            <%= report.status %>
-        </span>
+        <div class="card-body">
 
-    </div>
+            <div class="d-flex justify-content-between align-items-start">
 
-    <% if (report.image_data) { %>
+                <div>
 
-        <img
-            src="/fixit/<%= report.id %>/image"
-            class="img-fluid rounded mb-4"
-            style="max-height:400px;">
+                    <h2 class="fw-bold">
+                        <%= report.title %>
+                    </h2>
 
-    <% } %>
+                    <div class="mt-2">
 
-    <table class="table table-bordered">
+                        <span class="badge bg-primary">
+                            <%= report.category %>
+                        </span>
 
-        <tr>
-            <th width="180">Category</th>
-            <td><%= report.category %></td>
-        </tr>
+                        <span class="badge bg-warning text-dark">
+                            <%= report.severity %>
+                        </span>
 
-        <tr>
-            <th>Severity</th>
-            <td><%= report.severity %></td>
-        </tr>
+                        <% if (report.status === 'Open') { %>
 
-        <tr>
-            <th>Location</th>
-            <td><%= report.location %></td>
-        </tr>
+                            <span class="badge bg-danger">
+                                Open
+                            </span>
 
-        <tr>
-            <th>Reported By</th>
-            <td><%= report.username %></td>
-        </tr>
+                        <% } else if (report.status === 'In Progress') { %>
 
-        <tr>
-            <th>Created</th>
-            <td><%= new Date(report.created_at).toLocaleString() %></td>
-        </tr>
+                            <span class="badge bg-warning text-dark">
+                                In Progress
+                            </span>
 
-        <tr>
-            <th>Description</th>
-            <td>
+                        <% } else { %>
+
+                            <span class="badge bg-success">
+                                Resolved
+                            </span>
+
+                        <% } %>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <h5>Description</h5>
+
+            <p>
                 <%= report.description %>
-            </td>
-        </tr>
+            </p>
 
-    </table>
+            <h5>Location</h5>
 
-    <div class="mt-4">
+            <p>
+                <i class="bi bi-geo-alt-fill text-danger"></i>
+                <%= report.location %>
+            </p>
 
-        <a
-            href="/fixit"
-            class="btn btn-secondary">
+            <% if (report.image_data) { %>
 
-            Back
+                <hr>
 
-        </a>
+                <img
+                    src="/fixit/<%= report.id %>/image"
+                    class="incident-detail-image"
+                    alt="<%= report.title %> image">
 
-        <a
-            href="/fixit/<%= report.id %>/edit"
-            class="btn btn-warning">
+            <% } %>
 
-            Edit
+            <hr>
 
-        </a>
+            <p class="mb-1">
 
-        <form
-            action="/fixit/<%= report.id %>/delete"
-            method="POST"
-            style="display:inline;">
+                <strong>Reported By:</strong>
 
-            <button
-                class="btn btn-danger"
-                onclick="return confirm('Delete this report?')">
+                <%= report.username %>
 
-                Delete
+            </p>
 
-            </button>
+            <p>
 
-        </form>
+                <strong>Reported On:</strong>
+
+                <%= new Date(report.created_at).toLocaleString() %>
+
+            </p>
+
+            <div class="mt-4">
+
+                <a
+                    href="/fixit/<%= report.id %>/edit"
+                    class="btn btn-warning">
+
+                    Edit
+
+                </a>
+
+                <form
+                    action="/fixit/<%= report.id %>/delete"
+                    method="POST"
+                    class="d-inline">
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger"
+                        onclick="return confirm('Delete this report?')">
+
+                        Delete
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
 
     </div>
 
