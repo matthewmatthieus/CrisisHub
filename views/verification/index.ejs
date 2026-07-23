@@ -64,13 +64,29 @@
 
                 <div class="d-flex gap-2 mt-3">
 
-                    <button class="btn btn-success">
-                        Confirm
-                    </button>
+                    <form action="/verification/<%= incident.incident_id %>/confirm"
+                        method="POST">
 
-                    <button class="btn btn-danger">
-                        Dispute
-                    </button>
+                        <button type="submit"
+                                class="btn btn-success">
+
+                            Confirm
+
+                        </button>
+
+                    </form>
+
+                    <form action="/verification/<%= incident.incident_id %>/dispute"
+                        method="POST">
+
+                        <button type="submit"
+                                class="btn btn-danger">
+
+                            Dispute
+
+                        </button>
+
+                    </form>
 
                 </div>
 

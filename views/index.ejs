@@ -4,13 +4,14 @@
     <div class="dashboard-page-header d-flex justify-content-between align-items-center mb-4">
 
         <div>
-
-            <h2 class="fw-bold mb-1">Emergency Operations Dashboard</h2>
+            <h2 class="fw-bold mb-1">
+                Welcome,
+                <%= user ? user.username : currentUser.username %>
+            </h2>
 
             <p class="text-secondary mb-0">
                 Monitor incidents, verify reports and coordinate community response.
             </p>
-
         </div>
 
         <div class="dashboard-header-actions">
@@ -22,35 +23,32 @@
                     aria-controls="dashboardMapPanel">
 
                 <i class="bi bi-map me-2"></i>
-
                 <span>Map</span>
 
             </button>
 
             <div class="dropdown">
 
-                <button class="btn btn-warning report-main-btn dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false">
+                <button
+                    class="btn btn-warning report-main-btn dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown">
 
                     <i class="bi bi-plus-circle me-1"></i>
                     Report
 
                 </button>
 
-
                 <ul class="dropdown-menu">
 
                     <li>
-                        <a class="dropdown-item" href="/incidents/create">
+                        <a class="dropdown-item" href="/report/incident">
 
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             Report Incident
 
                         </a>
                     </li>
-
 
                     <li>
                         <a class="dropdown-item" href="/report/fixit">
@@ -79,10 +77,10 @@
 
                 <small>ACTIVE INCIDENTS</small>
 
-                <h2>12</h2>
+                <h2><%= stats.activeIncidents %></h2>
 
                 <span class="text-warning">
-                    +2 today
+                    Currently Active
                 </span>
 
             </div>
@@ -95,9 +93,13 @@
 
                 <small>CRITICAL</small>
 
-                <h2 class="text-danger">3</h2>
+                <h2 class="text-danger">
+                    <%= stats.criticalIncidents %>
+                </h2>
 
-                <span>Immediate response</span>
+                <span>
+                    Immediate Response
+                </span>
 
             </div>
 
@@ -107,11 +109,15 @@
 
             <div class="stats-card">
 
-                <small>VERIFYING</small>
+                <small>PENDING VERIFICATION</small>
 
-                <h2 class="text-warning">5</h2>
+                <h2 class="text-warning">
+                    <%= stats.pendingVerification %>
+                </h2>
 
-                <span>Community review</span>
+                <span>
+                    Awaiting Review
+                </span>
 
             </div>
 
@@ -123,9 +129,13 @@
 
                 <small>RESOLVED</small>
 
-                <h2 class="text-success">27</h2>
+                <h2 class="text-success">
+                    <%= stats.resolvedIncidents %>
+                </h2>
 
-                <span>Completed today</span>
+                <span>
+                    Successfully Closed
+                </span>
 
             </div>
 
@@ -138,10 +148,22 @@
     <div class="dashboard-view-stage" id="dashboardViewStage">
 
         <section class="dashboard-reports-panel is-visible"
-                 id="dashboardReportsPanel"
-                 aria-hidden="false">
+         id="dashboardReportsPanel"
+         aria-hidden="false">
 
-            <div class="incident-card">
+        <% if (incidents.length === 0) { %>
+
+            <div class="alert alert-info">
+
+                No incidents have been reported yet.
+
+            </div>
+
+        <% } %>
+
+        <% incidents.forEach(incident => { %>
+
+        <div class="incident-card">
 
         <div class="d-flex justify-content-between">
 
@@ -149,36 +171,80 @@
 
                 <div class="d-flex align-items-center gap-2 mb-2">
 
-                    <span class="badge bg-danger">
-                        HIGH
+                    <span class="badge
+                        <% if (incident.severity === 'Critical') { %>
+                            bg-danger
+                        <% } else if (incident.severity === 'High') { %>
+                            bg-warning text-dark
+                        <% } else if (incident.severity === 'Medium') { %>
+                            bg-primary
+                        <% } else { %>
+                            bg-success
+                        <% } %>">
+
+                        <%= incident.severity %>
+
                     </span>
 
-                    <span class="badge bg-success">
-                        VERIFIED
+                    <span class="badge
+                        <% if (incident.displayStatus === 'Resolved') { %>
+                            bg-success
+                        <% } else if (incident.displayStatus === 'Verified') { %>
+                            bg-primary
+                        <% } else { %>
+                            bg-secondary
+                        <% } %>">
+
+                        <%= incident.displayStatus %>
+
                     </span>
 
                 </div>
 
-                <h4>🌳 Fallen Tree Blocking Road</h4>
+                <h4>
 
-                <p class="text-secondary">
+                    <%= incident.title %>
 
-                    Large tree has fallen across the road near NTU South Spine.
-                    Vehicles are unable to pass safely.
+                </h4>
+
+                <p class="text-secondary mb-2">
+
+                    <%= incident.description || "No description provided." %>
 
                 </p>
+
+                <small class="text-muted">
+
+                    <i class="bi bi-geo-alt"></i>
+                    <%= incident.location %>
+
+                </small>
 
             </div>
 
             <div class="text-end">
 
                 <small class="text-secondary">
+
                     Reported by
+
                 </small>
 
                 <br>
 
-                <strong>Community User</strong>
+                <strong>
+
+                    <%= incident.owner_name || "Unknown User" %>
+
+                </strong>
+
+                <br>
+
+                <small class="text-muted">
+
+                    <%= new Date(incident.created_at).toLocaleString() %>
+
+                </small>
 
             </div>
 
@@ -190,8 +256,9 @@
 
             <div class="progress mt-2">
 
-                <div class="progress-bar bg-primary"
-                     style="width:82%">
+                <div
+                    class="progress-bar bg-primary"
+                    style="width:<%= incident.confidence %>%">
 
                 </div>
 
@@ -199,37 +266,66 @@
 
             <div class="d-flex justify-content-between mt-2">
 
-                <small>82% confidence</small>
+                <small>
 
-                <small>18 confirmations</small>
+                    <%= incident.confidence %>% confidence
+
+                </small>
+
+                <small>
+                    <%= incident.confirmCount %> confirmed
+
+                    <% if (incident.disputeCount > 0) { %>
+                        • <%= incident.disputeCount %> disputed
+                    <% } %>
+                </small>
 
             </div>
 
         </div>
 
-        <div class="mt-4 d-flex gap-2">
+        <div class="mt-4 d-flex gap-2 flex-wrap">
 
-            <button class="btn btn-success">
+            <form action="/verification/<%= incident.id %>/confirm"
+                method="POST"
+                class="d-inline">
 
-                👍 Confirm
+                <button
+                    type="submit"
+                    class="btn btn-success">
 
-            </button>
+                    👍 Confirm
 
-            <button class="btn btn-outline-warning">
+                </button>
 
-                👎 Dispute
+            </form>
 
-            </button>
+            <form action="/verification/<%= incident.id %>/dispute"
+                method="POST"
+                class="d-inline">
 
-            <button class="btn btn-outline-light">
+                <button
+                    type="submit"
+                    class="btn btn-outline-warning">
+
+                    👎 Dispute
+
+                </button>
+
+            </form>
+
+            <a href="/incidents/<%= incident.id %>"
+            class="btn btn-outline-light">
 
                 Details
 
-            </button>
+            </a>
 
         </div>
 
-            </div>
+        </div>
+
+        <% }) %>
 
         </section>
 
