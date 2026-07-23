@@ -1158,7 +1158,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
 
 .dashboard-view-stage{
 
-    overflow:hidden;
+    overflow:visible;
 
 }
 
@@ -1172,7 +1172,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
 
 .dashboard-reports-panel{
 
-    max-height:700px;
+    max-height:none;
     opacity:1;
     transform:translateY(0);
 
@@ -1182,6 +1182,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
 
     max-height:0;
     opacity:0;
+    overflow:hidden;
     transform:translateY(34px);
     pointer-events:none;
 
@@ -2305,3 +2306,159 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
     transform:translateY(-2px);
 
 }
+<<<<<<< HEAD
+=======
+
+/* =========================================
+   ADMIN DASHBOARD
+========================================= */
+
+.admin-hero{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    margin-bottom:28px;
+
+}
+
+.admin-hero .lead{
+
+    color:var(--text-muted);
+
+}
+
+.admin-kpi-card,
+.admin-chart-card,
+.admin-panel-card{
+
+    background:linear-gradient(180deg,#182233,#131b29);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+
+}
+
+.admin-kpi-card{
+
+    height:100%;
+    padding:22px;
+
+}
+
+.admin-kpi-label,
+.admin-section-label{
+
+    color:var(--text-muted);
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:1.6px;
+    text-transform:uppercase;
+
+}
+
+.admin-kpi-value{
+
+    margin:10px 0 6px;
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:-1px;
+
+}
+
+.admin-card-subtext{
+
+    color:var(--text-secondary);
+    font-size:13px;
+
+}
+
+.admin-chart-card,
+.admin-panel-card{
+
+    padding:22px;
+
+}
+
+.admin-chart-card canvas{
+
+    width:100% !important;
+    height:320px !important;
+
+}
+
+.admin-panel-card .table{
+
+    margin-bottom:0;
+
+}
+
+.admin-table-tools{
+
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+
+}
+
+.admin-activity-list{
+
+    display:grid;
+    gap:12px;
+
+}
+
+.admin-activity-item{
+
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    padding:14px 16px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:#111827;
+
+}
+
+.admin-activity-item strong{
+
+    display:block;
+    margin-bottom:4px;
+
+}
+
+.admin-muted{
+
+    color:var(--text-muted);
+}
+
+.admin-inline-form{
+
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+
+}
+
+@media (max-width:768px){
+
+    .admin-hero{
+
+        flex-direction:column;
+        align-items:flex-start;
+
+    }
+
+    .admin-chart-card canvas{
+
+        height:260px !important;
+
+    }
+
+}
+>>>>>>> 409070a (Add admin operations dashboard)

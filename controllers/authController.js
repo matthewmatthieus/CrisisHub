@@ -1,9 +1,9 @@
 const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
+const db = require('../config/db');
 const userModel = require('../models/userModel');
 const profileModel = require('../models/profileModel');
 const activityModel = require('../models/activityModel');
-const db = require('../config/db');
 const passwordResetModel = require('../models/passwordResetModel');
 const { createSecureToken, hashToken } = require('../services/tokenService');
 const {
@@ -27,6 +27,29 @@ function mapValidationErrors(validationErrors) {
         }
         return accumulator;
     }, {});
+}
+
+/**
+ * Maps common database failures to user-friendly auth messages.
+ */
+function getAuthFailureMessage(error, fallbackMessage) {
+    if (!error) {
+        return fallbackMessage;
+    }
+
+    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+        return 'Database login failed. Please check DB_USER and DB_PASSWORD in your environment settings.';
+    }
+
+    if (error.code === 'ER_BAD_DB_ERROR') {
+        return 'Database not found. Please check DB_NAME in your environment settings.';
+    }
+
+    if ((error.message || '').toLowerCase().includes('self-signed certificate')) {
+        return 'Database SSL certificate issue. If you are using local MySQL, set DB_SSL=false.';
+    }
+
+    return fallbackMessage;
 }
 
 /**
@@ -102,7 +125,12 @@ async function register(req, res) {
         console.error(error);
         return res.status(500).render('auth/register', {
             formData: req.body,
-            errors: { general: 'Unable to complete registration right now.' }
+            errors: {
+                general: getAuthFailureMessage(
+                    error,
+                    'Unable to complete registration right now.'
+                )
+            }
         });
     }
 }
@@ -180,7 +208,12 @@ async function login(req, res) {
         console.error(error);
         return res.status(500).render('auth/login', {
             formData: req.body,
-            errors: { general: 'Unable to login right now.' }
+            errors: {
+                general: getAuthFailureMessage(
+                    error,
+                    'Unable to login right now.'
+                )
+            }
         });
     }
 }
@@ -317,11 +350,16 @@ async function logout(req, res) {
 async function showDashboard(req, res) {
     try {
         const user = await userModel.findById(req.session.user.user_id);
-        const activity = await activityModel.getByUserId(req.session.user.user_id, 10);
+        const activity = await activityModel.getByUserId(
+            req.session.user.user_id,
+            10
+        );
 
+        // Dashboard statistics
         const [[active]] = await db.execute(
             "SELECT COUNT(*) AS total FROM incidents WHERE status != 'Resolved'"
         );
+
         const [[critical]] = await db.execute(
             "SELECT COUNT(*) AS total FROM incidents WHERE severity = 'Critical'"
         );
@@ -337,10 +375,59 @@ async function showDashboard(req, res) {
         const [[resolved]] = await db.execute(
             "SELECT COUNT(*) AS total FROM incidents WHERE status = 'Resolved'"
         );
+        // Latest incidents + verification statistics
+        const [incidents] = await db.execute(`
+            SELECT
+                i.*,
+                u.username AS owner_name,
+
+                COUNT(CASE WHEN iv.vote_type = 'confirm' THEN 1 END) AS confirmCount,
+
+                COUNT(CASE WHEN iv.vote_type = 'dispute' THEN 1 END) AS disputeCount,
+
+                COALESCE(
+                    ROUND(
+                        COUNT(CASE WHEN iv.vote_type = 'confirm' THEN 1 END)
+                        * 100.0 /
+                        NULLIF(COUNT(iv.vote_id), 0)
+                    ),
+                    0
+                ) AS confidence,
+
+                CASE
+                    WHEN COUNT(CASE WHEN iv.vote_type='confirm' THEN 1 END) >= 3
+                    THEN 'Verified'
+                    ELSE i.status
+                END AS displayStatus
+
+            FROM incidents i
+
+            LEFT JOIN (
+                SELECT
+                    incident_id,
+                    COUNT(CASE WHEN vote_type='confirm' THEN 1 END) AS confirms
+                FROM incident_votes
+                GROUP BY incident_id
+            ) v
+            ON v.incident_id = i.id
+
+            LEFT JOIN users u
+                ON i.user_id = u.id
+
+            LEFT JOIN incident_votes iv
+                ON i.id = iv.incident_id
+
+            WHERE COALESCE(v.confirms,0) < 3
+
+            GROUP BY i.id
+
+            ORDER BY i.created_at DESC
+        `);
 
         return res.render('index', {
             user,
             activity,
+            incidents,
             stats: {
                 activeIncidents: active.total,
                 criticalIncidents: critical.total,
@@ -348,10 +435,15 @@ async function showDashboard(req, res) {
                 resolvedIncidents: resolved.total
             }
         });
+
     } catch (error) {
+
         console.error(error);
-        req.session.error = 'Unable to load dashboard.';
-        return res.redirect('/auth/login');
+
+        req.session.error = "Unable to load dashboard.";
+
+        return res.redirect("/auth/login");
+
     }
 }
 

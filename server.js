@@ -10,6 +10,7 @@ const verificationRoutes = require('./routes/verification');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
 const { sendHelpRequestUpdateEmail } = require('./services/emailService');
@@ -87,6 +88,7 @@ app.use(async (req, res, next) => {
         incidents: 0,
         helpRequests: 0,
         resourceOffers: 0,
+        fixit: 0,
         verification: 3
     };
 
@@ -100,10 +102,19 @@ app.use(async (req, res, next) => {
         const [[incidentCount]] = await db.execute(
             'SELECT COUNT(*) AS count FROM incidents'
         );
+        let fixitCount = { count: 0 };
+
+        if (await tableExists('fixit_reports')) {
+            const [[row]] = await db.execute(
+                'SELECT COUNT(*) AS count FROM fixit_reports'
+            );
+            fixitCount = row;
+        }
 
         res.locals.sidebarCounts.resourceOffers = resourceCount.count;
         res.locals.sidebarCounts.helpRequests = helpRequestCount.count;
         res.locals.sidebarCounts.incidents = incidentCount.count;
+        res.locals.sidebarCounts.fixit = fixitCount.count;
         res.locals.sidebarCounts.allReports = resourceCount.count + helpRequestCount.count + incidentCount.count;
     } catch (error) {
         console.error('Unable to load sidebar counts:', error.message);
@@ -269,6 +280,17 @@ async function migrateLegacyIncidentImages() {
             }
         }
     }
+}
+
+async function tableExists(tableName) {
+    const [rows] = await db.execute(
+        `SELECT TABLE_NAME
+         FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = ?`,
+        [tableName]
+    );
+    return rows.length > 0;
 }
 
 function getResourceImageUpload(req) {
@@ -496,6 +518,7 @@ app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 app.use('/verification', verificationRoutes);
 app.use('/incidents', incidentRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/incidents', requireLogin, async (req, res) => {
     try {
@@ -670,7 +693,7 @@ app.get("/report/fixit", (req, res) => {
 });
 
 //Show Incident form
-app.get("/report/incident", (req, res) => {
+app.get("incidents/create", (req, res) => {
   res.render("incidents/form"); // views/incidents/form.ejs
 });
 
