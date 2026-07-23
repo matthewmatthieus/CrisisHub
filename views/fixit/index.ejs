@@ -1,47 +1,98 @@
 <div class="container-fluid py-4">
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2 class="fw-bold">FixIt Management</h2>
-      <p class="text-secondary mb-0">View and manage all reported FixIt issues.</p>
-    </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <a href="/report/fixit" class="btn btn-primary">
-      <i class="bi bi-plus-circle me-2"></i>
-      Create New FixIt Report
-    </a>
-  </div>
-
-  <% if (fixitReports.length === 0) { %>
-    <div class="alert alert-info">No FixIt reports have been submitted yet.</div>
-  <% } else { %>
-    <div class="row">
-      <% fixitReports.forEach(fixit => { %>
-        <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card shadow-sm h-100">
-            <div class="card-body">
-              <h5 class="fw-bold"><%= fixit.title %></h5>
-              <p class="text-muted"><%= fixit.description %></p>
-
-              <span class="badge bg-danger"><%= fixit.severity %></span>
-              <span class="badge bg-primary"><%= fixit.category %></span>
-
-              <% if (fixit.status === 'Active') { %>
-                <span class="badge bg-warning text-dark">Active</span>
-              <% } else { %>
-                <span class="badge bg-success">Resolved</span>
-              <% } %>
-
-              <hr>
-
-              <p class="mb-1"><strong>Location:</strong> <%= fixit.location %></p>
-              <p class="text-muted mb-3">Reported by <%= fixit.reported_by || "Anonymous" %></p>
-
-              <a href="/fixit/<%= fixit.id %>" class="btn btn-outline-primary btn-sm">View Details</a>
-            </div>
-          </div>
+        <div>
+            <h2 class="fw-bold">FixIt Management</h2>
+            <p class="text-secondary mb-0">
+                View and manage all reported FixIt issues.
+            </p>
         </div>
-      <% }) %>
+
+        <a href="/report/fixit" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            New FixIt Report
+        </a>
+
     </div>
-  <% } %>
+
+    <% if (fixitReports.length === 0) { %>
+
+        <div class="alert alert-info">
+            No FixIt reports have been submitted yet.
+        </div>
+
+    <% } else { %>
+
+        <div class="row">
+
+            <% fixitReports.forEach(fixit => { %>
+
+                <div class="col-md-6 col-lg-4 mb-4">
+
+                    <div class="card shadow-sm h-100">
+
+                        <% if (fixit.photo_url) { %>
+
+                            <img
+                                src="<%= fixit.photo_url %>"
+                                class="incident-card-image"
+                                alt="<%= fixit.title %> image">
+
+                        <% } else { %>
+
+                            <div class="incident-card-image incident-card-image-empty">
+                                No image
+                            </div>
+
+                        <% } %>
+
+                        <div class="card-body">
+
+                            <h5><%= fixit.title %></h5>
+
+                            <p class="text-muted">
+                                <%= fixit.description %>
+                            </p>
+
+                            <span class="badge bg-danger">
+                                <%= fixit.severity %>
+                            </span>
+
+                            <span class="badge bg-secondary">
+                                <%= fixit.category %>
+                            </span>
+
+                            <hr>
+
+                            <p class="mb-1">
+                                <strong>Location:</strong>
+                                <%= fixit.location %>
+                            </p>
+
+                            <p class="mb-1">
+                                <strong>Status:</strong>
+                                <%= fixit.status || 'Active' %>
+                            </p>
+
+                            <p class="text-muted mb-3">
+                                Reported by <%= fixit.reported_by || 'Anonymous' %>
+                            </p>
+
+                            <a href="/fixit/<%= fixit.id %>" class="btn btn-outline-primary btn-sm">
+                                View Details
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            <% }) %>
+
+        </div>
+
+    <% } %>
+
 </div>

@@ -1,57 +1,66 @@
-<div class="container-fluid py-4">
-
-  <a href="/fixit" class="btn btn-outline-secondary mb-4">
-    <i class="bi bi-arrow-left"></i>
-    Back to FixIt Reports
-  </a>
-
-  <div class="card shadow-sm">
-    <div class="card-body">
-
-      <h2 class="fw-bold mb-4">Create New FixIt Report</h2>
-
-      <form action="/report/fixit" method="POST" enctype="multipart/form-data">
-
-        <div class="mb-3">
-          <label for="title" class="form-label">Title</label>
-          <input type="text" id="title" name="title" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-          <label for="description" class="form-label">Description</label>
-          <textarea id="description" name="description" class="form-control" rows="3" required></textarea>
-        </div>
-
-        <div class="mb-3">
-          <label for="category" class="form-label">Category</label>
-          <input type="text" id="category" name="category" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-          <label for="severity" class="form-label">Severity</label>
-          <select id="severity" name="severity" class="form-select" required>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="location" class="form-label">Location</label>
-          <input type="text" id="location" name="location" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-          <label for="photo" class="form-label">Photo (optional)</label>
-          <input type="file" id="photo" name="photo" class="form-control">
-        </div>
-
-        <button type="submit" class="btn btn-warning">Submit FixIt Issue</button>
-        <a href="/fixit" class="btn btn-secondary">Cancel</a>
-
-      </form>
-
+<div class="page-header">
+    <div>
+        <h1>Report New FixIt Issue</h1>
+        <p>Report infrastructure and maintenance issues so they can be tracked and resolved.</p>
     </div>
-  </div>
+</div>
+
+<div class="content-card form-card">
+    <form action="/api/fixit" method="POST" enctype="multipart/form-data">
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label" for="title">Title</label>
+                <input class="form-control" id="title" name="title" type="text"
+                       placeholder="e.g. Street lamp out along Clementi Ave 3" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4"
+                          placeholder="Describe what you see – size, time, who is affected, dangers..." required></textarea>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="category">Category</label>
+                <select class="form-select" id="category" name="category" required>
+                    <option value="" selected disabled>Select a category...</option>
+                    <% ['Broken Lights', 'Road Damage', 'Drainage', 'Public Facilities', 'Infrastructure', 'Other'].forEach((category) => { %>
+                        <option value="<%= category %>"><%= category %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="location">Location</label>
+                <input class="form-control" id="location" name="location" type="text"
+                       placeholder="e.g. Bedok Interchange, Tampines Ave 3" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="severity">Severity</label>
+                <select class="form-select" id="severity" name="severity" required>
+                    <% ['Low', 'Medium', 'High', 'Critical'].forEach((severity) => { %>
+                        <option value="<%= severity %>" <%= severity === 'Medium' ? 'selected' : '' %>>
+                            <%= severity %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="photo">Image</label>
+                <input class="form-control" type="file" id="photo" name="photo"
+                       accept=".png,.jpg,.jpeg,.gif,.webp">
+                <div class="form-text">Upload a PNG, JPG, GIF, or WEBP image up to 2MB.</div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-light" href="/fixit">Cancel</a>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-check-circle me-1"></i>
+                Submit FixIt Issue
+            </button>
+        </div>
+    </form>
 </div>
