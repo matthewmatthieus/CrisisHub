@@ -63,6 +63,55 @@
         <div class="sidebar-title">
             ADMIN
         </div>
+
+        <a href="/admin" class="sidebar-link <%= currentPath === '/admin' ? 'active' : '' %>">
+            <div class="sidebar-left">
+                <i class="bi bi-speedometer2 text-primary"></i>
+                <span>Dashboard</span>
+            </div>
+        </a>
+
+        <a href="/admin/users" class="sidebar-link <%= currentPath.startsWith('/admin/users') ? 'active' : '' %>">
+            <div class="sidebar-left">
+                <i class="bi bi-people-fill text-info"></i>
+                <span>Manage Users</span>
+            </div>
+        </a>
+
+        <a href="/admin/reports" class="sidebar-link <%= currentPath.startsWith('/admin/reports') ? 'active' : '' %>">
+            <div class="sidebar-left">
+                <i class="bi bi-journal-text text-warning"></i>
+                <span>Manage Reports</span>
+            </div>
+        </a>
+
+        <a href="/admin/categories" class="sidebar-link <%= currentPath.startsWith('/admin/categories') ? 'active' : '' %>">
+            <div class="sidebar-left">
+                <i class="bi bi-tags-fill text-success"></i>
+                <span>Manage Categories</span>
+            </div>
+        </a>
+
+        <a href="/admin/incidents" class="sidebar-link <%= currentPath.startsWith('/admin/incidents') ? 'active' : '' %>">
+            <div class="sidebar-left">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                <span>Incident Status</span>
+            </div>
+        </a>
+
+        <a href="/admin/moderation" class="sidebar-link <%= currentPath.startsWith('/admin/moderation') ? 'active' : '' %>">
+            <div class="sidebar-left">
+                <i class="bi bi-shield-check text-info"></i>
+                <span>Moderate Reports</span>
+            </div>
+        </a>
+
+        <a href="/admin/statistics" class="sidebar-link <%= currentPath.startsWith('/admin/statistics') ? 'active' : '' %>">
+            <div class="sidebar-left">
+                <i class="bi bi-graph-up-arrow text-primary"></i>
+                <span>Statistics</span>
+            </div>
+        </a>
     </div>
 
 </aside>

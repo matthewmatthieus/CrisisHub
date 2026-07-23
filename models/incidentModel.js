@@ -5,7 +5,8 @@ async function getAllIncidents() {
     const [rows] = await db.execute(`
         SELECT
             i.*,
-            u.username
+            u.username,
+            u.email
         FROM incidents i
         JOIN users u
             ON i.user_id = u.id
@@ -20,7 +21,8 @@ async function getIncidentById(id) {
     const [rows] = await db.execute(`
         SELECT
             i.*,
-            u.username
+            u.username,
+            u.email
         FROM incidents i
         JOIN users u
             ON i.user_id = u.id
@@ -42,6 +44,8 @@ async function createIncident(incident) {
         latitude,
         longitude,
         image,
+        image_data,
+        image_mime_type,
         user_id
     } = incident;
 
@@ -56,9 +60,11 @@ async function createIncident(incident) {
             latitude,
             longitude,
             image,
+            image_data,
+            image_mime_type,
             user_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
         title,
         description,
@@ -68,6 +74,8 @@ async function createIncident(incident) {
         latitude,
         longitude,
         image,
+        image_data,
+        image_mime_type,
         user_id
     ]);
 
@@ -85,6 +93,9 @@ async function updateIncident(id, incident) {
         location,
         latitude,
         longitude,
+        image,
+        image_data,
+        image_mime_type,
         status
     } = incident;
 
@@ -98,6 +109,9 @@ async function updateIncident(id, incident) {
             location = ?,
             latitude = ?,
             longitude = ?,
+            image = ?,
+            image_data = ?,
+            image_mime_type = ?,
             status = ?
         WHERE id = ?
     `, [
@@ -108,9 +122,21 @@ async function updateIncident(id, incident) {
         location,
         latitude,
         longitude,
+        image,
+        image_data,
+        image_mime_type,
         status,
         id
     ]);
+}
+
+async function getIncidentImage(id) {
+    const [rows] = await db.execute(
+        `SELECT image_data, image_mime_type FROM incidents WHERE id = ?`,
+        [id]
+    );
+
+    return rows[0];
 }
 
 // Delete incident
@@ -126,5 +152,6 @@ module.exports = {
     getIncidentById,
     createIncident,
     updateIncident,
-    deleteIncident
+    deleteIncident,
+    getIncidentImage
 };

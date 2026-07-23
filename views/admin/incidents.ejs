@@ -1,0 +1,53 @@
+<div class="admin-hero">
+    <div>
+        <span class="admin-section-label">Administration</span>
+        <h1 class="mb-2">Update Incident Status</h1>
+        <p class="lead mb-0">Move incidents through the review and resolution workflow.</p>
+    </div>
+    <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
+</div>
+
+<div class="admin-panel-card">
+    <div class="admin-table-tools">
+        <div>
+            <div class="admin-section-label">Incidents</div>
+            <h3 class="mb-0"><%= incidents.length %> Records</h3>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Location</th>
+                    <th class="text-end">Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% incidents.forEach(function(incident) { %>
+                    <tr>
+                        <td><%= incident.title %></td>
+                        <td><%= incident.category %></td>
+                        <td><span class="badge bg-danger"><%= incident.severity %></span></td>
+                        <td><span class="badge bg-secondary"><%= incident.status %></span></td>
+                        <td><%= incident.location %></td>
+                        <td class="text-end">
+                            <form class="admin-inline-form justify-content-end" method="POST" action="/admin/incidents/<%= incident.id %>/status">
+                                <select class="form-select form-select-sm w-auto" name="status" required>
+                                    <% statusOptions.forEach(function(option) { %>
+                                        <option value="<%= option %>" <%= option === incident.status ? 'selected' : '' %>><%= option %></option>
+                                    <% }) %>
+                                </select>
+                                <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>

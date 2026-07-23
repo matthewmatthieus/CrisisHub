@@ -1,0 +1,203 @@
+<div class="admin-hero">
+    <div>
+        <span class="admin-section-label">Administration</span>
+        <h1 class="mb-2">Operations & Analytics Dashboard</h1>
+        <p class="lead mb-0">Monitor crisis volumes, response health, and moderation queues in one place.</p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-light" href="/admin/reports">View Reports</a>
+        <a class="btn btn-primary" href="/admin/statistics">Open Statistics</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Total Users</div>
+            <div class="admin-kpi-value"><%= summary.totalUsers %></div>
+            <div class="admin-card-subtext">Registered community members and admins</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Active Help Requests</div>
+            <div class="admin-kpi-value"><%= summary.activeHelpRequests %></div>
+            <div class="admin-card-subtext">Open or matched requests that still need action</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Resource Offers</div>
+            <div class="admin-kpi-value"><%= summary.resourceOffers %></div>
+            <div class="admin-card-subtext">Supplies available for matching</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">FixIt SG Reports</div>
+            <div class="admin-kpi-value"><%= summary.fixitReports %></div>
+            <div class="admin-card-subtext">Community maintenance and fault reports</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Critical Incidents</div>
+            <div class="admin-kpi-value text-danger"><%= summary.criticalIncidents %></div>
+            <div class="admin-card-subtext">Reports marked as critical severity</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Pending Reports</div>
+            <div class="admin-kpi-value text-warning"><%= summary.pendingReports %></div>
+            <div class="admin-card-subtext">Incident reports waiting for review</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Resolved Reports</div>
+            <div class="admin-kpi-value text-success"><%= summary.resolvedReports %></div>
+            <div class="admin-card-subtext">Incident reports closed by the operations team</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Verified Reports</div>
+            <div class="admin-kpi-value text-info"><%= summary.verifiedReports %></div>
+            <div class="admin-card-subtext">Reports confirmed as valid by reviewers</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="admin-chart-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="admin-section-label">Analytics</div>
+                    <h3 class="mb-0">Most Common Incident Categories</h3>
+                </div>
+            </div>
+            <canvas id="incidentCategoryChart"></canvas>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="admin-chart-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="admin-section-label">Analytics</div>
+                    <h3 class="mb-0">Most Requested Resources</h3>
+                </div>
+            </div>
+            <canvas id="resourceCategoryChart"></canvas>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="admin-chart-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="admin-section-label">Analytics</div>
+                    <h3 class="mb-0">Resolution Rate</h3>
+                </div>
+            </div>
+            <canvas id="resolutionRateChart"></canvas>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="admin-chart-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="admin-section-label">Analytics</div>
+                    <h3 class="mb-0">Monthly Reports</h3>
+                </div>
+            </div>
+            <canvas id="monthlyReportsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-5">
+        <div class="admin-panel-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="admin-section-label">Operations</div>
+                    <h3 class="mb-0">Recent Activities</h3>
+                </div>
+            </div>
+
+            <div class="admin-activity-list">
+                <% recentActivities.forEach(function(activity) { %>
+                    <div class="admin-activity-item">
+                        <div>
+                            <strong><%= activity.activity_type %></strong>
+                            <div class="admin-muted"><%= activity.headline %></div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-secondary"><%= activity.detail %></span>
+                            <div class="admin-muted mt-1"><%= new Date(activity.created_at).toLocaleString() %></div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-7">
+        <div class="admin-panel-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="admin-section-label">Quick Links</div>
+                    <h3 class="mb-0">Admin Pages</h3>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <a class="card h-100 text-decoration-none" href="/admin/users">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Users</h5>
+                            <p class="card-text admin-muted mb-0">Review user accounts and update roles.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a class="card h-100 text-decoration-none" href="/admin/reports">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Reports</h5>
+                            <p class="card-text admin-muted mb-0">Inspect incidents, requests, offers, and FixIt SG reports.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a class="card h-100 text-decoration-none" href="/admin/categories">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Categories</h5>
+                            <p class="card-text admin-muted mb-0">Review and normalize category labels across tables.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a class="card h-100 text-decoration-none" href="/admin/incidents">
+                        <div class="card-body">
+                            <h5 class="card-title">Update Incident Status</h5>
+                            <p class="card-text admin-muted mb-0">Move incident reports through the review workflow.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.__ADMIN_DASHBOARD__ = <%- JSON.stringify({
+        incidentCategories: charts.incidentCategories,
+        resourceCategories: charts.resourceCategories,
+        resolutionRate: charts.resolutionRate,
+        monthlyReports: charts.monthlyReports
+    }).replace(/</g, '\\u003c') %>;
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="/js/adminDashboard.js"></script>
