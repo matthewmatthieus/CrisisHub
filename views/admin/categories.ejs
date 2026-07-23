@@ -1,0 +1,104 @@
+<div class="admin-hero">
+    <div>
+        <span class="admin-section-label">Administration</span>
+        <h1 class="mb-2">Manage Categories</h1>
+        <p class="lead mb-0">Review category usage and normalize labels across tables.</p>
+    </div>
+    <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-5">
+        <div class="admin-panel-card h-100">
+            <div class="admin-section-label">Category Rename</div>
+            <h3 class="mb-3">Update a Label</h3>
+            <form method="POST" action="/admin/categories/rename" class="d-grid gap-3">
+                <div>
+                    <label class="form-label" for="tableName">Source Table</label>
+                    <select class="form-select" id="tableName" name="tableName" required>
+                        <% sourceTableOptions.forEach(function(option) { %>
+                            <option value="<%= option.value %>"><%= option.label %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="oldCategory">Current Category</label>
+                    <select class="form-select" id="oldCategory" name="oldCategory" required>
+                        <% categorySummary.forEach(function(category) { %>
+                            <option value="<%= category.category %>"><%= category.category %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="newCategory">New Category Name</label>
+                    <input class="form-control" type="text" id="newCategory" name="newCategory" maxlength="50" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Apply Update</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-xl-7">
+        <div class="admin-panel-card h-100">
+            <div class="admin-section-label">Overview</div>
+            <h3 class="mb-3">Category Usage</h3>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Total</th>
+                            <th>Source Breakdown</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% categorySummary.forEach(function(category) { %>
+                            <tr>
+                                <td><%= category.category %></td>
+                                <td><strong><%= category.total %></strong></td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <% category.sourceBreakdown.forEach(function(source) { %>
+                                            <span class="badge bg-secondary"><%= source.sourceTable %>: <%= source.total %></span>
+                                        <% }) %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Incident Categories</div>
+            <div class="admin-kpi-value"><%= categoriesBySource.incidents.length %></div>
+            <div class="admin-card-subtext">Unique labels used in incident reports</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Help Request Categories</div>
+            <div class="admin-kpi-value"><%= categoriesBySource.helpRequests.length %></div>
+            <div class="admin-card-subtext">Unique labels used in help requests</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">Resource Categories</div>
+            <div class="admin-kpi-value"><%= categoriesBySource.resourceOffers.length %></div>
+            <div class="admin-card-subtext">Unique labels used in resource offers</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="admin-kpi-card">
+            <div class="admin-kpi-label">FixIt Categories</div>
+            <div class="admin-kpi-value"><%= categoriesBySource.fixitReports.length %></div>
+            <div class="admin-card-subtext">Unique labels used in FixIt SG reports</div>
+        </div>
+    </div>
+</div>

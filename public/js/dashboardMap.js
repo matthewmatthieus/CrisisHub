@@ -203,6 +203,12 @@
                     .bindPopup(buildPopup(item))
                     .addTo(layer);
 
+                marker.on('click', () => {
+                    const zoomAfterClick = Math.max(map.getZoom() - 2, defaultMapZoom - 1);
+                    map.setView(marker.getLatLng(), zoomAfterClick, { animate: true });
+                    marker.openPopup();
+                });
+
                 markerById.set(item.id, marker);
             });
 

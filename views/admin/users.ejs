@@ -1,0 +1,60 @@
+<div class="admin-hero">
+    <div>
+        <span class="admin-section-label">Administration</span>
+        <h1 class="mb-2">Manage Users</h1>
+        <p class="lead mb-0">Review account roles and update user access levels.</p>
+    </div>
+    <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
+</div>
+
+<div class="admin-panel-card">
+    <div class="admin-table-tools">
+        <div>
+            <div class="admin-section-label">Users</div>
+            <h3 class="mb-0"><%= users.length %> Accounts</h3>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <% if (hasStatusColumn) { %>
+                        <th>Status</th>
+                    <% } %>
+                    <th>Created</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(function(user) { %>
+                    <tr>
+                        <td>
+                            <strong><%= user.display_name %></strong>
+                            <div class="admin-muted">ID: <%= user.id %></div>
+                        </td>
+                        <td><%= user.email %></td>
+                        <td><span class="badge bg-info text-dark"><%= user.role %></span></td>
+                        <% if (hasStatusColumn) { %>
+                            <td><span class="badge bg-secondary"><%= user.status %></span></td>
+                        <% } %>
+                        <td><%= new Date(user.created_at).toLocaleString() %></td>
+                        <td class="text-end">
+                            <form class="admin-inline-form justify-content-end" method="POST" action="/admin/users/<%= user.id %>/role">
+                                <select class="form-select form-select-sm w-auto" name="role" required>
+                                    <% roleOptions.forEach(function(option) { %>
+                                        <option value="<%= option %>" <%= option === user.role ? 'selected' : '' %>><%= option %></option>
+                                    <% }) %>
+                                </select>
+                                <button class="btn btn-sm btn-primary" type="submit">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>

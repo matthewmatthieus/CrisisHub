@@ -10,12 +10,15 @@ const verificationRoutes = require('./routes/verification');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
+const { sendHelpRequestUpdateEmail } = require('./services/emailService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const resourceUploadDir = path.join(__dirname, 'public', 'uploads', 'resources');
+const incidentUploadDir = path.join(__dirname, 'public', 'uploads', 'incidents');
 const allowedResourceImageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 const allowedResourceImageMimeTypes = new Set([
     'image/png',
@@ -66,6 +69,7 @@ app.use(async (req, res, next) => {
         incidents: 0,
         helpRequests: 0,
         resourceOffers: 0,
+        fixit: 0,
         verification: 3
     };
 
@@ -79,10 +83,19 @@ app.use(async (req, res, next) => {
         const [[incidentCount]] = await db.execute(
             'SELECT COUNT(*) AS count FROM incidents'
         );
+        let fixitCount = { count: 0 };
+
+        if (await tableExists('fixit_reports')) {
+            const [[row]] = await db.execute(
+                'SELECT COUNT(*) AS count FROM fixit_reports'
+            );
+            fixitCount = row;
+        }
 
         res.locals.sidebarCounts.resourceOffers = resourceCount.count;
         res.locals.sidebarCounts.helpRequests = helpRequestCount.count;
         res.locals.sidebarCounts.incidents = incidentCount.count;
+        res.locals.sidebarCounts.fixit = fixitCount.count;
         res.locals.sidebarCounts.allReports = resourceCount.count + helpRequestCount.count + incidentCount.count;
     } catch (error) {
         console.error('Unable to load sidebar counts:', error.message);
@@ -114,6 +127,122 @@ async function ensureResourceOfferImageColumn() {
              ADD COLUMN image_filename VARCHAR(255) NULL AFTER notes`
         );
     }
+}
+
+async function ensureIncidentImageColumn() {
+    const [columns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image'`
+    );
+
+    if (columns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image VARCHAR(255) NULL AFTER description`
+        );
+    }
+
+    const [dataColumns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image_data'`
+    );
+
+    if (dataColumns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image_data MEDIUMBLOB NULL AFTER image`
+        );
+    }
+
+    const [mimeColumns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image_mime_type'`
+    );
+
+    if (mimeColumns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image_mime_type VARCHAR(100) NULL AFTER image_data`
+        );
+    }
+
+    await migrateLegacyIncidentImages();
+}
+
+async function ensureEmailTables() {
+    const emailColumns = [
+        ['email_verified', 'BOOLEAN NOT NULL DEFAULT TRUE'],
+        ['verification_token_hash', 'VARCHAR(255) NULL'],
+        ['verification_token_expires_at', 'DATETIME NULL'],
+        ['verification_email_sent_at', 'DATETIME NULL']
+    ];
+
+    for (const [name, definition] of emailColumns) {
+        const [columns] = await db.execute(`SHOW COLUMNS FROM users LIKE '${name}'`);
+        if (columns.length === 0) {
+            await db.execute(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);
+        }
+    }
+
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token_hash VARCHAR(255) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_password_reset_token_hash (token_hash),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+}
+
+async function migrateLegacyIncidentImages() {
+    const [legacyIncidents] = await db.execute(
+        `SELECT id, image
+         FROM incidents
+         WHERE image IS NOT NULL AND image_data IS NULL`
+    );
+
+    const mimeTypes = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+    };
+
+    for (const incident of legacyIncidents) {
+        const filename = path.basename(incident.image);
+        const mimeType = mimeTypes[path.extname(filename).toLowerCase()];
+
+        if (!mimeType) {
+            continue;
+        }
+
+        try {
+            const imageData = await fs.readFile(path.join(incidentUploadDir, filename));
+            await db.execute(
+                `UPDATE incidents
+                 SET image_data = ?, image_mime_type = ?, image = NULL
+                 WHERE id = ? AND image_data IS NULL`,
+                [imageData, mimeType, incident.id]
+            );
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                console.error(`Unable to migrate incident image ${filename}:`, error.message);
+            }
+        }
+    }
+}
+
+async function tableExists(tableName) {
+    const [rows] = await db.execute(
+        `SELECT TABLE_NAME
+         FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = ?`,
+        [tableName]
+    );
+    return rows.length > 0;
 }
 
 function getResourceImageUpload(req) {
@@ -341,6 +470,7 @@ app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 app.use('/verification', verificationRoutes);
 app.use('/incidents', incidentRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/incidents', requireLogin, async (req, res) => {
     try {
@@ -642,6 +772,14 @@ app.post('/helpRequests/:id/update', isAdmin, async (req, res) => {
     const { title, category, quantity_needed, location, urgency, status } = req.body;
 
     try {
+        const [[existingRequest]] = await db.execute(
+            `SELECT hr.*, u.username AS requester_name, u.email AS requester_email
+             FROM help_requests hr
+             LEFT JOIN users u ON hr.user_id = u.id
+             WHERE hr.id = ?`,
+            [req.params.id]
+        );
+
         const [result] = await db.execute(
             `UPDATE help_requests
              SET title = ?, category = ?, quantity_needed = ?, location = ?, urgency = ?, status = ?
@@ -652,6 +790,25 @@ app.post('/helpRequests/:id/update', isAdmin, async (req, res) => {
         if (result.affectedRows === 0) {
             req.session.error = 'Unable to update help request.';
             return res.redirect(`/helpRequests/${req.params.id}/edit`);
+        }
+
+        if (existingRequest && existingRequest.requester_email) {
+            const eventType = status === 'Matched'
+                ? 'accepted'
+                : status === 'Closed'
+                    ? 'closed'
+                    : urgency !== existingRequest.urgency
+                        ? 'urgency_changed'
+                        : null;
+
+            if (eventType) {
+                sendHelpRequestUpdateEmail({
+                    email: existingRequest.requester_email,
+                    name: existingRequest.requester_name,
+                    helpRequestId: req.params.id,
+                    eventType
+                }).catch((emailError) => console.error('Unable to send help request email:', emailError.message));
+            }
         }
 
         req.session.success = 'Help request updated successfully.';
@@ -683,7 +840,8 @@ app.post('/helpRequests/:id/delete', isAdmin, async (req, res) => {
 app.get('/api/map-items', isAuthenticated, async (req, res) => {
     try {
         const [incidentResults] = await db.execute(
-            `SELECT id, title, location, severity, status
+            `SELECT id, title, location, severity, status, image,
+                    image_data IS NOT NULL AS has_image
              FROM incidents
              ORDER BY created_at DESC`
         );
@@ -710,6 +868,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             location: incident.location,
             status: incident.status,
             severity: incident.severity,
+            imageUrl: incident.has_image ? `/incidents/${incident.id}/image` : null,
             ...await resolveSingaporeLocation(incident.location)
         })));
 
@@ -1117,9 +1276,11 @@ console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
 async function startServer() {
     try {
+        await ensureEmailTables();
         await ensureResourceOfferImageColumn();
+        await ensureIncidentImageColumn();
     } catch (error) {
-        console.error('Unable to prepare resource offer image column:', error.message);
+        console.error('Unable to prepare image upload columns:', error.message);
     }
 
     app.listen(PORT, () => {

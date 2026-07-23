@@ -1,0 +1,76 @@
+<div class="admin-hero">
+    <div>
+        <span class="admin-section-label">Administration</span>
+        <h1 class="mb-2">Dashboard Statistics</h1>
+        <p class="lead mb-0">Detailed operational metrics for users, incidents, resources, and reports.</p>
+    </div>
+    <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3"><div class="admin-kpi-card"><div class="admin-kpi-label">Total Users</div><div class="admin-kpi-value"><%= summary.totalUsers %></div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="admin-kpi-card"><div class="admin-kpi-label">Critical Incidents</div><div class="admin-kpi-value text-danger"><%= summary.criticalIncidents %></div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="admin-kpi-card"><div class="admin-kpi-label">Resolved Reports</div><div class="admin-kpi-value text-success"><%= summary.resolvedReports %></div></div></div>
+    <div class="col-md-6 col-xl-3"><div class="admin-kpi-card"><div class="admin-kpi-label">Verified Reports</div><div class="admin-kpi-value text-info"><%= summary.verifiedReports %></div></div></div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="admin-panel-card h-100">
+            <div class="admin-section-label">Resolution</div>
+            <h3 class="mb-3">Incident Resolution Rate</h3>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Total Reports</th>
+                            <th>Resolved</th>
+                            <th>Resolution Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% charts.resolutionRate.forEach(function(row) { %>
+                            <tr>
+                                <td><%= row.month %></td>
+                                <td><%= row.total_reports %></td>
+                                <td><%= row.resolved_reports %></td>
+                                <td><%= row.resolution_rate %>%</td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="admin-panel-card h-100">
+            <div class="admin-section-label">Monthly</div>
+            <h3 class="mb-3">Reports per Month</h3>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Total Reports</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% charts.monthlyReports.forEach(function(row) { %>
+                            <tr>
+                                <td><%= row.month %></td>
+                                <td><%= row.total %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-6"><div class="admin-panel-card h-100"><div class="admin-section-label">Incident Categories</div><h3 class="mb-3">Top Categories</h3><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Category</th><th>Total</th></tr></thead><tbody><% charts.incidentCategories.forEach(function(row) { %><tr><td><%= row.category %></td><td><%= row.total %></td></tr><% }) %></tbody></table></div></div></div>
+    <div class="col-xl-6"><div class="admin-panel-card h-100"><div class="admin-section-label">Resource Requests</div><h3 class="mb-3">Top Requested Resources</h3><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Category</th><th>Total</th></tr></thead><tbody><% charts.resourceCategories.forEach(function(row) { %><tr><td><%= row.category %></td><td><%= row.total %></td></tr><% }) %></tbody></table></div></div></div>
+</div>

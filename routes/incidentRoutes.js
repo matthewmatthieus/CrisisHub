@@ -16,6 +16,8 @@ router.post('/create', isAuthenticated, incidentController.createIncident);
 // Display single incident
 router.get('/:id', isAuthenticated, incidentController.showIncident);
 
+router.get('/:id/image', isAuthenticated, incidentController.showIncidentImage);
+
 // Display edit form
 router.get('/:id/edit', isAuthenticated, incidentController.showEditForm);
 
