@@ -651,13 +651,13 @@ app.get("/report/fixit", isAuthenticated, (req, res) => {
   res.render("fixit/form");
 });
 
-<<<<<<< HEAD
+
 // Show Incident form (teammate’s part)
-app.get("/report/incident", isAuthenticated, (req, res) => {
-=======
+app.get("/incidents/create", isAuthenticated, (req, res) => {
+    
 //Show Incident form
-app.get("incidents/create", (req, res) => {
->>>>>>> 2664d87f98f5799cdade90c4514922d97c5e9371
+app.get("/incidents/create", (req, res) => {
+
   res.render("incidents/form"); // views/incidents/form.ejs
 });
 
