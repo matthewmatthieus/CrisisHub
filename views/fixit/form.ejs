@@ -1,5 +1,6 @@
 <div class="container mt-4">
-  <h2 class="mb-3">Report a FixIt Issue</h2>
+  <h2 class="page-title">FixIt Reports</h2>
+
 
   <form action="/api/fixit" method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
 
@@ -49,6 +50,10 @@
       <input type="file" id="photo" name="photo" class="form-control">
     </div>
 
-    <button type="submit" class="btn btn-warning w-100">Submit FixIt Issue</button>
+    <div class="d-flex justify-content-between">
+      <button type="submit" class="btn btn-warning">Submit FixIt Issue</button>
+      <a href="/fixit" class="btn btn-secondary">Cancel</a>
+    </div>
+
   </form>
 </div>

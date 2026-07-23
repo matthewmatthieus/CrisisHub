@@ -11,7 +11,8 @@ const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
 const authController = require('./controllers/authController');
-const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
+const { isAuthenticated, isAdmin, ensureAuthenticated } = require("./middleware/authMiddleware");
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,6 +95,7 @@ app.use(async (req, res, next) => {
 function requireLogin(req, res, next) {
     return isAuthenticated(req, res, next);
 }
+
 
 function canManageOffer(offer, req) {
     if (!offer || !req.session.user) {
@@ -486,48 +488,72 @@ app.post('/incidents/:id/delete', isAdmin, async (req, res) => {
 // FixIt Routes
 // =====================
 
+
+
 // Show all FixIt reports
-app.get("/fixit", async (req, res) => {
+app.get("/fixit", isAuthenticated, async (req, res) => {
   try {
-    const result = await db.query("SELECT * FROM fixit_reports ORDER BY created_at DESC");
-    res.render("fixit/index", { fixitReports: result.rows });
+    const [rows] = await db.query("SELECT * FROM fixit_reports ORDER BY created_at DESC");
+    res.render("fixit/index", { fixitReports: rows });
   } catch (err) {
     console.error(err);
     res.render("fixit/index", { fixitReports: [], error: "Unable to load FixIt reports" });
   }
 });
 
+
 // Show a single FixIt report
-app.get("/fixit/:id", async (req, res) => {
+app.get("/fixit/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.query("SELECT * FROM fixit_reports WHERE id = $1", [id]);
-    res.render("fixit/show", { fixit: result.rows[0] });
+    const [rows] = await db.query("SELECT * FROM fixit_reports WHERE id = ?", [id]);
+    if (rows.length === 0) return res.redirect("/fixit");
+    res.render("fixit/show", { fixit: rows[0] });
   } catch (err) {
     console.error(err);
     res.redirect("/fixit");
   }
 });
 
+
 // Show FixIt form
-app.get("/report/fixit", (req, res) => {
+app.get("/report/fixit", isAuthenticated, (req, res) => {
   res.render("fixit/form");
 });
 
-//Show Incident form
-app.get("/report/incident", (req, res) => {
+// Show Incident form (teammate’s part)
+app.get("/report/incident", isAuthenticated, (req, res) => {
   res.render("incidents/form"); // views/incidents/form.ejs
 });
 
 // Handle FixIt form submission
-app.post("/api/fixit", async (req, res) => {
+app.post("/api/fixit", isAuthenticated, async (req, res) => {
   try {
     const { title, category, location, severity, description } = req.body;
+    let photoUrl = null;
+
+    if (req.files && req.files.photo) {
+      const photo = req.files.photo;
+
+      // Generate unique filename: timestamp + original name
+      const timestamp = Date.now();
+      const safeName = photo.name.replace(/\s+/g, "_"); // replace spaces
+      const uniqueName = `${timestamp}_${safeName}`;
+
+      const uploadPath = path.join(__dirname, "public", "uploads", "fixit", uniqueName);
+
+      // Save file to server
+      await photo.mv(uploadPath);
+
+      // Store relative path in DB
+      photoUrl = "/uploads/fixit/" + uniqueName;
+    }
 
     await db.query(
-      "INSERT INTO fixit_reports (title, category, location, severity, description) VALUES ($1, $2, $3, $4, $5)",
-      [title, category, location, severity, description]
+        "INSERT INTO fixit_reports (title, category, location, severity, description, photo_url) VALUES (?, ?, ?, ?, ?, ?)",
+        [title, category, location, severity, description, photoUrl]
     );
+
 
     res.redirect("/fixit");
   } catch (err) {
@@ -536,7 +562,30 @@ app.post("/api/fixit", async (req, res) => {
   }
 });
 
+// Edit form
+app.get("/fixit/:id/edit", isAuthenticated, async (req, res) => {
+  const { id } = req.params;
+  const [rows] = await db.query("SELECT * FROM fixit_reports WHERE id = ?", [id]);
+  res.render("fixit/edit", { fixit: rows[0] });
+});
 
+// Handle edit submission
+app.put("/fixit/:id", isAuthenticated, async (req, res) => {
+  const { id } = req.params;
+  const { title, category, location, severity, description } = req.body;
+  await db.query(
+    "UPDATE fixit_reports SET title=?, category=?, location=?, severity=?, description=? WHERE id=?",
+    [title, category, location, severity, description, id]
+  );
+  res.redirect(`/fixit/${id}`);
+});
+
+// Delete
+app.delete("/fixit/:id", isAuthenticated, async (req, res) => {
+  const { id } = req.params;
+  await db.query("DELETE FROM fixit_reports WHERE id = ?", [id]);
+  res.redirect("/fixit");
+});
 
 app.get('/helpRequests', requireLogin, async (req, res) => {
     try {
