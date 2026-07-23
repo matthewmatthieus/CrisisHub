@@ -15,7 +15,8 @@ const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
 const { sendHelpRequestUpdateEmail } = require('./services/emailService');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
+const PORT = Number(process.env.PORT) || 3000;
 const resourceUploadDir = path.join(__dirname, 'public', 'uploads', 'resources');
 const incidentUploadDir = path.join(__dirname, 'public', 'uploads', 'incidents');
 const allowedResourceImageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
@@ -27,6 +28,7 @@ const allowedResourceImageMimeTypes = new Set([
 ]);
 
 // Middleware
+app.set('trust proxy', 1);
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -39,10 +41,27 @@ app.use(fileUpload({
     }
 }));
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'crisishub-dev-secret',
+    secret: process.env.SESSION_SECRET || (isProduction ? undefined : 'crisishub-dev-secret'),
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    proxy: isProduction,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: isProduction,
+        maxAge: 1000 * 60 * 60 * 8
+    }
 }));
+
+app.get('/health', async (req, res) => {
+    try {
+        await db.query('SELECT 1');
+        return res.json({ status: 'ok' });
+    } catch (error) {
+        console.error('Health check failed:', error.message);
+        return res.status(503).json({ status: 'unavailable' });
+    }
+});
 
 // View Engine
 app.set('view engine', 'ejs');
@@ -1287,6 +1306,14 @@ console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
 async function startServer() {
     try {
+        if (isProduction && !process.env.SESSION_SECRET) {
+            throw new Error('SESSION_SECRET must be configured in production.');
+        }
+
+        if (isProduction && !process.env.APP_URL) {
+            throw new Error('APP_URL must be configured in production.');
+        }
+
         await ensureEmailTables();
         await ensureResourceOfferImageColumn();
         await ensureResourceOfferExpiryColumn();
@@ -1295,8 +1322,8 @@ async function startServer() {
         console.error('Unable to prepare image upload columns:', error.message);
     }
 
-    app.listen(PORT, () => {
-        console.log(`CrisisHub running on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`CrisisHub running on port ${PORT}`);
     });
 }
 
