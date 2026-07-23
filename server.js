@@ -645,7 +645,7 @@ app.get("/report/fixit", (req, res) => {
 });
 
 //Show Incident form
-app.get("/report/incident", (req, res) => {
+app.get("incidents/create", (req, res) => {
   res.render("incidents/form"); // views/incidents/form.ejs
 });
 
