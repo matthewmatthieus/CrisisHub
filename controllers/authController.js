@@ -9,8 +9,13 @@ const { createSecureToken, hashToken } = require('../services/tokenService');
 const {
     sendVerificationEmail,
     sendWelcomeEmail,
+    sendProductBriefEmail,
     sendPasswordResetEmail
 } = require('../services/emailService');
+
+function appUrl(pathname = '') {
+    return `${(process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '')}/${String(pathname).replace(/^\/+/, '')}`;
+}
 
 /**
  * Converts express-validator errors into a simple object map.
@@ -108,7 +113,7 @@ async function register(req, res) {
         await sendVerificationEmail({
             email,
             name: username,
-            verificationUrl: `${process.env.APP_URL || 'http://localhost:3000'}/auth/verify-email/${token}`
+            verificationUrl: appUrl(`/auth/verify-email/${token}`)
         });
 
         return res.render('auth/verify-pending', {
@@ -233,11 +238,15 @@ async function requestPasswordReset(req, res) {
             await sendPasswordResetEmail({
                 email: user.email,
                 name: user.username,
-                resetUrl: `${process.env.APP_URL || 'http://localhost:3000'}/auth/reset-password/${token}`
+                resetUrl: appUrl(`/auth/reset-password/${token}`)
             });
         }
     } catch (error) {
         console.error(error);
+        return res.status(503).render('auth/forgot-password', {
+            success: null,
+            error: 'We could not send the reset email right now. Please try again later.'
+        });
     }
 
     return res.render('auth/forgot-password', { success: genericMessage, error: null });
@@ -256,6 +265,7 @@ async function verifyEmail(req, res) {
         await userModel.markEmailVerified(user.id);
         try {
             await sendWelcomeEmail({ email: user.email, name: user.username });
+            await sendProductBriefEmail({ email: user.email, name: user.username });
         } catch (emailError) {
             console.error(emailError);
         }
@@ -307,7 +317,7 @@ async function resendVerification(req, res) {
 
         const { token, tokenHash } = createSecureToken();
         await userModel.updateVerificationToken(user.id, tokenHash, new Date(Date.now() + 60 * 60 * 1000));
-        await sendVerificationEmail({ email: user.email, name: user.username, verificationUrl: `${process.env.APP_URL || 'http://localhost:3000'}/auth/verify-email/${token}` });
+        await sendVerificationEmail({ email: user.email, name: user.username, verificationUrl: appUrl(`/auth/verify-email/${token}`) });
     } catch (error) {
         console.error(error);
         return res.status(500).render('auth/verify-pending', { email: req.body.email, success: null, error: 'Unable to resend the email.' });
@@ -339,7 +349,6 @@ async function logout(req, res) {
  */
 async function showDashboard(req, res) {
     try {
-
         const user = await userModel.findById(req.session.user.user_id);
         const activity = await activityModel.getByUserId(
             req.session.user.user_id,
@@ -354,7 +363,6 @@ async function showDashboard(req, res) {
         const [[critical]] = await db.execute(
             "SELECT COUNT(*) AS total FROM incidents WHERE severity = 'Critical'"
         );
-
         const [[pending]] = await db.execute(`
             SELECT COUNT(*) AS total
             FROM incidents i
@@ -364,11 +372,9 @@ async function showDashboard(req, res) {
             WHERE iv.vote_id IS NULL
               AND i.status = 'Active'
         `);
-
         const [[resolved]] = await db.execute(
             "SELECT COUNT(*) AS total FROM incidents WHERE status = 'Resolved'"
         );
-
         // Latest incidents + verification statistics
         const [incidents] = await db.execute(`
             SELECT
@@ -418,7 +424,7 @@ async function showDashboard(req, res) {
             ORDER BY i.created_at DESC
         `);
 
-        return res.render("index", {
+        return res.render('index', {
             user,
             activity,
             incidents,
