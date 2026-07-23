@@ -3,8 +3,7 @@ const db = require('../config/db');
 const ALLOWED_CATEGORY_TABLES = new Set([
     'incidents',
     'help_requests',
-    'resource_offers',
-    'fixit_reports'
+    'resource_offers'
 ]);
 
 async function tableExists(tableName) {
@@ -68,10 +67,6 @@ async function getDashboardData() {
          WHERE status IN ('Open', 'Matched')`
     );
     const [resourceOffers] = await db.execute('SELECT COUNT(*) AS count FROM resource_offers');
-    const fixitAvailable = await tableExists('fixit_reports');
-    const [fixitReports] = fixitAvailable
-        ? await db.execute('SELECT COUNT(*) AS count FROM fixit_reports')
-        : [[{ count: 0 }]];
     const [criticalIncidents] = await db.execute(
         `SELECT COUNT(*) AS count
          FROM incidents
@@ -132,12 +127,6 @@ async function getDashboardData() {
         `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total FROM resource_offers GROUP BY month`
     ];
 
-    if (fixitAvailable) {
-        monthlySources.push(
-            `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total FROM fixit_reports GROUP BY month`
-        );
-    }
-
     const [monthlyReports] = await db.execute(
         `SELECT month, SUM(total) AS total
          FROM (${monthlySources.join(' UNION ALL ')}) AS monthly_feed
@@ -164,16 +153,6 @@ async function getDashboardData() {
          FROM resource_offers`
     ];
 
-    if (fixitAvailable) {
-        activitySources.push(
-            `SELECT 'FixIt SG' AS activity_type,
-                    title AS headline,
-                    COALESCE(status, 'Open') AS detail,
-                    created_at
-             FROM fixit_reports`
-        );
-    }
-
     const [recentActivities] = await db.execute(
         `SELECT activity_type, headline, detail, created_at
          FROM (${activitySources.join(' UNION ALL ')}) AS activity_feed
@@ -186,7 +165,6 @@ async function getDashboardData() {
             totalUsers: totalUsers[0].count,
             activeHelpRequests: activeHelpRequests[0].count,
             resourceOffers: resourceOffers[0].count,
-            fixitReports: fixitReports[0].count,
             criticalIncidents: criticalIncidents[0].count,
             pendingReports: pendingReports[0].count,
             resolvedReports: resolvedReports[0].count,
@@ -224,22 +202,10 @@ async function getReportData() {
          LIMIT 12`
     );
 
-    const fixitAvailable = await tableExists('fixit_reports');
-    const [fixitReports] = fixitAvailable
-        ? await db.execute(
-            `SELECT *
-             FROM fixit_reports
-             ORDER BY created_at DESC
-             LIMIT 12`
-        )
-        : [[]];
-
     return {
         incidents,
         helpRequests,
-        resourceOffers,
-        fixitReports,
-        fixitAvailable
+        resourceOffers
     };
 }
 
@@ -262,18 +228,9 @@ async function getCategoryData() {
          GROUP BY category`
     );
 
-    const fixitAvailable = await tableExists('fixit_reports');
-    const [fixitCategories] = fixitAvailable
-        ? await db.execute(
-            `SELECT category, COUNT(*) AS total, 'fixit_reports' AS source_table
-             FROM fixit_reports
-             GROUP BY category`
-        )
-        : [[]];
-
     const summaryMap = new Map();
 
-    for (const row of [...incidentCategories, ...helpRequestCategories, ...resourceOfferCategories, ...fixitCategories]) {
+    for (const row of [...incidentCategories, ...helpRequestCategories, ...resourceOfferCategories]) {
         if (!summaryMap.has(row.category)) {
             summaryMap.set(row.category, {
                 category: row.category,
@@ -296,14 +253,12 @@ async function getCategoryData() {
     const categoriesBySource = {
         incidents: incidentCategories,
         helpRequests: helpRequestCategories,
-        resourceOffers: resourceOfferCategories,
-        fixitReports: fixitCategories
+        resourceOffers: resourceOfferCategories
     };
 
     return {
         categorySummary,
-        categoriesBySource,
-        fixitAvailable
+        categoriesBySource
     };
 }
 
@@ -327,34 +282,7 @@ async function getIncidentData() {
 }
 
 async function getModerationData() {
-    const fixitAvailable = await tableExists('fixit_reports');
-
-    if (!fixitAvailable) {
-        return {
-            fixitAvailable: false,
-            statusColumnAvailable: false,
-            fixitReports: [],
-            statusOptions: []
-        };
-    }
-
-    const columns = await getTableColumns('fixit_reports');
-    const statusColumn = pickColumn(columns, ['status', 'moderation_status']);
-
-    const [fixitReports] = await db.execute(
-        `SELECT *
-         FROM fixit_reports
-         ORDER BY created_at DESC`
-    );
-
-    return {
-        fixitAvailable: true,
-        statusColumnAvailable: Boolean(statusColumn),
-        fixitReports,
-        statusOptions: statusColumn
-            ? ['Open', 'Reviewed', 'Approved', 'Rejected', 'Resolved']
-            : []
-    };
+    return {};
 }
 
 async function getStatisticsData() {
@@ -373,10 +301,6 @@ async function renameCategory(tableName, oldCategory, newCategory) {
         throw new Error('Unsupported category table.');
     }
 
-    if (tableName === 'fixit_reports' && !(await tableExists('fixit_reports'))) {
-        throw new Error('FixIt reports are not available in this database.');
-    }
-
     await db.execute(
         `UPDATE \`${tableName}\`
          SET category = ?
@@ -392,28 +316,6 @@ async function updateIncidentStatus(incidentId, status) {
     );
 }
 
-async function updateFixitStatus(reportId, status) {
-    const fixitAvailable = await tableExists('fixit_reports');
-
-    if (!fixitAvailable) {
-        throw new Error('FixIt reports are not available in this database.');
-    }
-
-    const columns = await getTableColumns('fixit_reports');
-    const statusColumn = pickColumn(columns, ['status', 'moderation_status']);
-
-    if (!statusColumn) {
-        throw new Error('FixIt reports do not have a moderation status column.');
-    }
-
-    await db.execute(
-        `UPDATE fixit_reports
-         SET \`${statusColumn}\` = ?
-         WHERE id = ?`,
-        [status, reportId]
-    );
-}
-
 module.exports = {
     getDashboardData,
     getUsersPageData,
@@ -424,6 +326,5 @@ module.exports = {
     getStatisticsData,
     updateUserRole,
     renameCategory,
-    updateIncidentStatus,
-    updateFixitStatus
+    updateIncidentStatus
 };

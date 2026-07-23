@@ -2,7 +2,7 @@
     <div>
         <span class="admin-section-label">Administration</span>
         <h1 class="mb-2">Manage Reports</h1>
-        <p class="lead mb-0">Track incident, request, offer, and FixIt SG report queues.</p>
+        <p class="lead mb-0">Track incident, request, and resource offer queues.</p>
     </div>
     <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
 </div>
@@ -115,43 +115,4 @@
         </div>
     </div>
 
-    <div class="col-12">
-        <div class="admin-panel-card">
-            <div class="admin-table-tools">
-                <div>
-                    <div class="admin-section-label">FixIt SG Reports</div>
-                    <h3 class="mb-0"><%= fixitReports.length %> Records</h3>
-                </div>
-            </div>
-
-            <% if (!fixitAvailable) { %>
-                <div class="alert alert-warning mb-0">FixIt SG reports are not available in this database.</div>
-            <% } else { %>
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Category</th>
-                                <th>Severity</th>
-                                <th>Status</th>
-                                <th>Location</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% fixitReports.forEach(function(report) { %>
-                                <tr>
-                                    <td><%= report.title %></td>
-                                    <td><%= report.category %></td>
-                                    <td><span class="badge bg-danger"><%= report.severity %></span></td>
-                                    <td><span class="badge bg-secondary"><%= report.status || 'Open' %></span></td>
-                                    <td><%= report.location %></td>
-                                </tr>
-                            <% }) %>
-                        </tbody>
-                    </table>
-                </div>
-            <% } %>
-        </div>
-    </div>
 </div>

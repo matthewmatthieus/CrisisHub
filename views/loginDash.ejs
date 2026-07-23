@@ -46,14 +46,26 @@
                     <% if (!activity || activity.length === 0) { %>
                         <div class="alert alert-secondary mb-0">No user activity yet.</div>
                     <% } else { %>
-                        <ul class="list-group list-group-flush">
-                            <% activity.forEach((item) => { %>
-                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                                    <span><%= item.activity %></span>
-                                    <small class="text-muted"><%= new Date(item.created_at).toLocaleString() %></small>
-                                </li>
-                            <% }) %>
-                        </ul>
+                        <div class="table-responsive profile-activity-table-wrap">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th scope="col" style="width: 72px;">#</th>
+                                        <th scope="col">Activity</th>
+                                        <th scope="col" style="width: 240px;">Date & Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% activity.forEach((item, index) => { %>
+                                        <tr>
+                                            <th scope="row"><%= index + 1 %></th>
+                                            <td><%= item.activity %></td>
+                                            <td class="text-muted"><%= new Date(item.created_at).toLocaleString() %></td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
                     <% } %>
                 </div>
             </div>

@@ -1658,6 +1658,54 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
 
 }
 
+.profile-activity-scroll{
+
+    max-height:320px;
+    overflow-y:auto;
+
+}
+
+.profile-activity-scroll .table thead th{
+
+    position:sticky;
+    top:0;
+    z-index:1;
+    background:#ffffff !important;
+    color:#000000 !important;
+    font-weight:700;
+
+}
+
+.profile-activity-scroll .table tbody th{
+
+    color:var(--text-primary) !important;
+    background:transparent;
+    border-color:var(--border-light) !important;
+    font-weight:600;
+    padding:18px;
+
+}
+
+.profile-activity-scroll .table tbody td{
+
+    color:var(--text-primary) !important;
+    background:transparent;
+    border-color:var(--border-light) !important;
+
+}
+
+.profile-activity-scroll .table tbody tr{
+
+    background:transparent;
+
+}
+
+.profile-activity-time{
+
+    color:var(--text-muted) !important;
+
+}
+
 /* =========================================
    FORMS
 ========================================= */
@@ -2420,6 +2468,15 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
     border-radius:14px;
     background:#111827;
 
+    .profile-activity-table-wrap{
+        max-height: 320px;
+        overflow-y: auto;
+    }
+    .profile-activity-table-wrap thead th{
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
 }
 
 .admin-activity-item strong{

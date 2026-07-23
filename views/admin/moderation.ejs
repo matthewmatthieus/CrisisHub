@@ -2,58 +2,11 @@
     <div>
         <span class="admin-section-label">Administration</span>
         <h1 class="mb-2">Moderate Reports</h1>
-        <p class="lead mb-0">Review FixIt SG submissions and apply moderation outcomes.</p>
+        <p class="lead mb-0">Moderation tools are temporarily unavailable while FixIt SG is rebuilt.</p>
     </div>
     <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
 </div>
 
 <div class="admin-panel-card">
-    <div class="admin-table-tools">
-        <div>
-            <div class="admin-section-label">FixIt SG</div>
-            <h3 class="mb-0"><%= fixitReports.length %> Reports</h3>
-        </div>
-    </div>
-
-    <% if (!fixitAvailable) { %>
-        <div class="alert alert-warning mb-0">FixIt SG reports are not available in this database.</div>
-    <% } else if (!statusColumnAvailable) { %>
-        <div class="alert alert-info mb-0">FixIt SG reports do not expose a moderation status column in the current schema.</div>
-    <% } else { %>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Severity</th>
-                        <th>Location</th>
-                        <th>Status</th>
-                        <th class="text-end">Moderate</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% fixitReports.forEach(function(report) { %>
-                        <tr>
-                            <td><%= report.title %></td>
-                            <td><%= report.category %></td>
-                            <td><span class="badge bg-danger"><%= report.severity %></span></td>
-                            <td><%= report.location %></td>
-                            <td><span class="badge bg-secondary"><%= report.status %></span></td>
-                            <td class="text-end">
-                                <form class="admin-inline-form justify-content-end" method="POST" action="/admin/moderation/fixit/<%= report.id %>/status">
-                                    <select class="form-select form-select-sm w-auto" name="status" required>
-                                        <% statusOptions.forEach(function(option) { %>
-                                            <option value="<%= option %>" <%= option === report.status ? 'selected' : '' %>><%= option %></option>
-                                        <% }) %>
-                                    </select>
-                                    <button class="btn btn-sm btn-primary" type="submit">Save</button>
-                                </form>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } %>
+    <div class="alert alert-info mb-0">FixIt SG moderation endpoints were removed as part of the module reset.</div>
 </div>

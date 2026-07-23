@@ -49,14 +49,28 @@
                     <% if (!activity || activity.length === 0) { %>
                         <div class="alert alert-secondary mb-0">No activity found yet.</div>
                     <% } else { %>
-                        <ul class="list-group list-group-flush">
-                            <% activity.forEach((item) => { %>
-                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                                    <span><%= item.activity %></span>
-                                    <small class="text-muted"><%= new Date(item.created_at).toLocaleString() %></small>
-                                </li>
-                            <% }) %>
-                        </ul>
+                        <div class="table-container mt-2">
+                            <div class="table-responsive profile-activity-scroll">
+                                <table class="table resource-table align-middle mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col" style="width: 72px;">#</th>
+                                        <th scope="col">Activity</th>
+                                        <th scope="col" style="width: 240px;">Date & Time</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% activity.forEach((item, index) => { %>
+                                            <tr>
+                                                <th scope="row"><%= index + 1 %></th>
+                                                <td><%= item.activity %></td>
+                                                <td class="profile-activity-time"><%= new Date(item.created_at).toLocaleString() %></td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     <% } %>
                 </div>
             </div>

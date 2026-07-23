@@ -71,8 +71,7 @@ exports.showCategories = async (req, res) => {
             sourceTableOptions: [
                 { value: 'incidents', label: 'Incidents' },
                 { value: 'help_requests', label: 'Help Requests' },
-                { value: 'resource_offers', label: 'Resource Offers' },
-                ...(data.fixitAvailable ? [{ value: 'fixit_reports', label: 'FixIt SG Reports' }] : [])
+                { value: 'resource_offers', label: 'Resource Offers' }
             ]
         });
     } catch (error) {
@@ -127,18 +126,6 @@ exports.showModeration = async (req, res) => {
         });
     } catch (error) {
         renderError(res, error, '/admin', 'Unable to load the moderation page.');
-    }
-};
-
-exports.updateFixitStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-
-        await adminModel.updateFixitStatus(req.params.id, status);
-        req.session.success = 'FixIt report status updated.';
-        res.redirect('/admin/moderation');
-    } catch (error) {
-        renderError(res, error, '/admin/moderation');
     }
 };
 

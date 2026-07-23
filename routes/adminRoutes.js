@@ -22,7 +22,6 @@ router.get('/incidents', adminController.showIncidentStatus);
 router.post('/incidents/:id/status', adminController.updateIncidentStatus);
 
 router.get('/moderation', adminController.showModeration);
-router.post('/moderation/fixit/:id/status', adminController.updateFixitStatus);
 
 router.get('/statistics', adminController.showStatistics);
 
