@@ -427,10 +427,36 @@ async function showDashboard(req, res) {
             ORDER BY i.created_at DESC
         `);
 
+        const [fixits] = await db.execute(`
+            SELECT
+                f.*,
+                u.username AS owner_name,
+
+                COUNT(fv.id) AS supportCount
+
+            FROM fixit_reports f
+
+            LEFT JOIN users u
+                ON f.user_id = u.id
+
+            LEFT JOIN fixit_volunteers fv
+                ON fv.fixit_id = f.id
+
+            WHERE f.status != 'Resolved'
+
+            GROUP BY f.id
+
+            ORDER BY supportCount DESC,
+                    f.created_at DESC
+
+            LIMIT 5
+        `);
+
         return res.render('index', {
             user,
             activity,
             incidents,
+            fixits,
             stats: {
                 activeIncidents: active.total,
                 criticalIncidents: critical.total,

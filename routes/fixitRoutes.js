@@ -28,10 +28,10 @@ router.post('/:id/edit', isAuthenticated, fixitController.updateFixit);
 // Logged in only - Delete
 router.post('/:id/delete', isAuthenticated, fixitController.deleteFixit);
 
-// Logged in only - Volunteer
-router.post('/:id/volunteer', isAuthenticated, fixitController.volunteer);
+// Public - Volunteer
+router.post('/:id/volunteer', fixitController.volunteer);
 
-// Logged in only - Withdraw volunteer
-router.post('/:id/withdraw', isAuthenticated, fixitController.withdrawVolunteer);
+// Public - Withdraw volunteer
+router.post('/:id/withdraw', fixitController.withdrawVolunteer);
 
 module.exports = router;

@@ -1,34 +1,46 @@
 <div class="container-fluid py-4">
 
     <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-header">
+
         <div>
-            <h1 class="h2 text-white fw-bold mb-1">Help Requests</h1>
-            <p class="text-muted mb-0">
-                Review and manage community requests for urgent assistance.
+            <h1>
+                Help Requests
+            </h1>
+
+            <p>
+                Review community requests for urgent assistance.
             </p>
         </div>
 
         <% if (isAdmin) { %>
-            <a class="btn btn-primary shadow-sm" href="/helpRequests/new">
-                <i class="bi bi-plus-lg me-1"></i>
+
+        <div class="page-actions">
+
+            <a class="btn btn-primary" href="/helpRequests/new">
+                <i class="bi bi-plus-circle me-1"></i>
                 New Request
             </a>
+
+        </div>
+
         <% } %>
+
     </div>
 
     <!-- Data Table Card -->
     <div class="card bg-dark text-white border-secondary shadow rounded-3 overflow-hidden">
+        <div class="card-header">
 
-        <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
-            <h5 class="mb-0 fw-bold">
-                <i class="bi bi-life-preserver text-danger me-2"></i>
+            <h2>
+                <i class="bi bi-life-preserver"></i>
                 Open Help Requests
-            </h5>
+            </h2>
 
-            <span class="badge bg-secondary rounded-pill px-3 py-2">
+            <span class="text-secondary">
                 <%= requests.length %> requests
             </span>
+
         </div>
 
         <div class="card-body p-0">

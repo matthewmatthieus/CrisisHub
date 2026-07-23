@@ -7,14 +7,32 @@ exports.showAllFixits = async (req, res) => {
     try {
 
         const [reports] = await db.execute(`
-        SELECT
-            f.*,
-            COALESCE(u.username, 'Guest') AS username
-        FROM fixit_reports f
-        LEFT JOIN users u
-        ON f.user_id = u.id
-        ORDER BY f.created_at DESC
-        `);
+            SELECT
+                f.*,
+                COALESCE(u.username, 'Guest') AS username,
+                COUNT(fv.id) AS volunteerCount,
+
+                MAX(
+                    CASE 
+                        WHEN fv.user_id = ? THEN 1
+                        ELSE 0
+                    END
+                ) AS userVolunteered
+
+            FROM fixit_reports f
+
+            LEFT JOIN users u
+                ON f.user_id = u.id
+
+            LEFT JOIN fixit_volunteers fv
+                ON fv.fixit_id = f.id
+
+            GROUP BY f.id
+
+            ORDER BY f.created_at DESC
+        `, [
+            req.session.user ? req.session.user.user_id : 0
+        ]);
 
         res.render("fixit/index", {
             reports,
@@ -279,7 +297,84 @@ exports.deleteFixit = async (req, res) => {
 // ==========================
 exports.volunteer = async (req, res) => {
 
-    res.send("Volunteer endpoint");
+    try {
+
+        const fixitId = req.params.id;
+
+        const userId = req.session.user
+            ? req.session.user.user_id
+            : null;
+
+        // Check if already volunteered
+        let existing = [];
+
+        if (userId) {
+
+            const [rows] = await db.execute(
+                `
+                SELECT *
+                FROM fixit_volunteers
+                WHERE fixit_id = ?
+                AND user_id = ?
+                `,
+                [
+                    fixitId,
+                    userId
+                ]
+            );
+
+            existing = rows;
+
+        }
+
+
+        if (existing.length) {
+
+            return res.redirect(`/fixit/${fixitId}`);
+
+        }
+
+
+        // Add volunteer
+        await db.execute(
+            `
+            INSERT INTO fixit_volunteers
+            (
+                fixit_id,
+                user_id
+            )
+            VALUES (?,?)
+            `,
+            [
+                fixitId,
+                userId
+            ]
+        );
+
+
+        // Update status
+        await db.execute(
+            `
+            UPDATE fixit_reports
+            SET status = 'In Progress'
+            WHERE id = ?
+            AND status = 'Open'
+            `,
+            [
+                fixitId
+            ]
+        );
+
+
+        res.redirect(`/fixit`);
+
+
+    } catch (err) {
+
+        console.error(err);
+        res.status(500).send("Server Error");
+
+    }
 
 };
 
@@ -288,6 +383,29 @@ exports.volunteer = async (req, res) => {
 // ==========================
 exports.withdrawVolunteer = async (req, res) => {
 
-    res.send("Withdraw endpoint");
+    try {
+
+        await db.execute(
+            `
+            DELETE FROM fixit_volunteers
+            WHERE fixit_id = ?
+            AND user_id = ?
+            `,
+            [
+                req.params.id,
+                req.session.user.user_id
+            ]
+        );
+
+
+        res.redirect("/fixit");
+
+
+    } catch (err) {
+
+        console.error(err);
+        res.status(500).send("Server Error");
+
+    }
 
 };

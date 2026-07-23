@@ -130,18 +130,59 @@
                                 Reported by <%= report.username %>
                             </p>
 
+                            <p class="text-muted mb-3">
+                                <i class="bi bi-people-fill me-1"></i>
+                                <%= report.volunteerCount || 0 %> volunteers
+                            </p>
+
                         </div>
 
                         <div class="card-footer">
 
-                            <a
-                                href="/fixit/<%= report.id %>"
-                                class="btn btn-outline-primary w-100"
-                            >
+                            <div class="d-flex gap-2">
 
-                                View Details
+                                <a
+                                    href="/fixit/<%= report.id %>"
+                                    class="btn btn-outline-primary flex-fill"
+                                >
+                                    View Details
+                                </a>
 
-                            </a>
+                                <% if (report.status !== "Resolved") { %>
+
+                                    <% if (report.userVolunteered) { %>
+
+                                        <form action="/fixit/<%= report.id %>/withdraw" method="POST" class="flex-fill">
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-outline-danger w-100"
+                                            >
+                                                <i class="bi bi-x-circle me-1"></i>
+                                                Withdraw
+                                            </button>
+
+                                        </form>
+
+                                    <% } else { %>
+
+                                        <form action="/fixit/<%= report.id %>/volunteer" method="POST" class="flex-fill">
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-success w-100"
+                                            >
+                                                <i class="bi bi-hand-thumbs-up me-1"></i>
+                                                Volunteer
+                                            </button>
+
+                                        </form>
+
+                                    <% } %>
+
+                                <% } %>
+
+                            </div>
 
                         </div>
 
