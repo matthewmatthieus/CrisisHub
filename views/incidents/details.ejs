@@ -109,28 +109,43 @@
 
             <div class="mt-4">
 
-                <a
-                    href="/incidents/<%= incident.id %>/edit"
-                    class="btn btn-warning">
+                <% if (isAdmin) { %>
 
-                    Edit
+                    <a
+                        href="/incidents/<%= incident.id %>/edit"
+                        class="btn btn-warning">
 
-                </a>
+                        Edit
 
-                <form
-                    action="/incidents/<%= incident.id %>/delete"
-                    method="POST"
-                    class="d-inline">
+                    </a>
 
-                    <button
-                        class="btn btn-danger"
-                        onclick="return confirm('Delete this incident?')">
+                    <form
+                        action="/incidents/<%= incident.id %>/delete"
+                        method="POST"
+                        class="d-inline">
 
-                        Delete
+                        <button
+                            type="submit"
+                            class="btn btn-danger"
+                            onclick="return confirm('Delete this incident?')">
 
-                    </button>
+                            Delete
 
-                </form>
+                        </button>
+
+                    </form>
+
+                <% } else if (isOwner) { %>
+
+                    <a
+                        href="/incidents/<%= incident.id %>/edit"
+                        class="btn btn-warning">
+
+                        Edit
+
+                    </a>
+
+                <% } %>
 
             </div>
 

@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
+const db = require('../config/db');
 const userModel = require('../models/userModel');
 const profileModel = require('../models/profileModel');
 const activityModel = require('../models/activityModel');
@@ -338,17 +339,105 @@ async function logout(req, res) {
  */
 async function showDashboard(req, res) {
     try {
-        const user = await userModel.findById(req.session.user.user_id);
-        const activity = await activityModel.getByUserId(req.session.user.user_id, 10);
 
-        return res.render('index', {
+        const user = await userModel.findById(req.session.user.user_id);
+        const activity = await activityModel.getByUserId(
+            req.session.user.user_id,
+            10
+        );
+
+        // Dashboard statistics
+        const [[active]] = await db.execute(
+            "SELECT COUNT(*) AS total FROM incidents WHERE status != 'Resolved'"
+        );
+
+        const [[critical]] = await db.execute(
+            "SELECT COUNT(*) AS total FROM incidents WHERE severity = 'Critical'"
+        );
+
+        const [[pending]] = await db.execute(`
+            SELECT COUNT(*) AS total
+            FROM incidents i
+            LEFT JOIN incident_votes iv
+                ON i.id = iv.incident_id
+                AND iv.vote_type = 'confirm'
+            WHERE iv.vote_id IS NULL
+              AND i.status = 'Active'
+        `);
+
+        const [[resolved]] = await db.execute(
+            "SELECT COUNT(*) AS total FROM incidents WHERE status = 'Resolved'"
+        );
+
+        // Latest incidents + verification statistics
+        const [incidents] = await db.execute(`
+            SELECT
+                i.*,
+                u.username AS owner_name,
+
+                COUNT(CASE WHEN iv.vote_type = 'confirm' THEN 1 END) AS confirmCount,
+
+                COUNT(CASE WHEN iv.vote_type = 'dispute' THEN 1 END) AS disputeCount,
+
+                COALESCE(
+                    ROUND(
+                        COUNT(CASE WHEN iv.vote_type = 'confirm' THEN 1 END)
+                        * 100.0 /
+                        NULLIF(COUNT(iv.vote_id), 0)
+                    ),
+                    0
+                ) AS confidence,
+
+                CASE
+                    WHEN COUNT(CASE WHEN iv.vote_type='confirm' THEN 1 END) >= 3
+                    THEN 'Verified'
+                    ELSE i.status
+                END AS displayStatus
+
+            FROM incidents i
+
+            LEFT JOIN (
+                SELECT
+                    incident_id,
+                    COUNT(CASE WHEN vote_type='confirm' THEN 1 END) AS confirms
+                FROM incident_votes
+                GROUP BY incident_id
+            ) v
+            ON v.incident_id = i.id
+
+            LEFT JOIN users u
+                ON i.user_id = u.id
+
+            LEFT JOIN incident_votes iv
+                ON i.id = iv.incident_id
+
+            WHERE COALESCE(v.confirms,0) < 3
+
+            GROUP BY i.id
+
+            ORDER BY i.created_at DESC
+        `);
+
+        return res.render("index", {
             user,
-            activity
+            activity,
+            incidents,
+            stats: {
+                activeIncidents: active.total,
+                criticalIncidents: critical.total,
+                pendingVerification: pending.total,
+                resolvedIncidents: resolved.total
+            }
         });
+
     } catch (error) {
+
         console.error(error);
-        req.session.error = 'Unable to load dashboard.';
-        return res.redirect('/auth/login');
+
+        req.session.error = "Unable to load dashboard.";
+
+        return res.redirect("/auth/login");
+
     }
 }
 

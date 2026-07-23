@@ -94,7 +94,20 @@ async function showIncident(req, res) {
             return res.redirect('/incidents');
         }
 
-        res.render('incidents/details', { incident });
+        const isOwner =
+            req.session.user &&
+            Number(req.session.user.id) === Number(incident.user_id);
+
+        const isAdmin =
+            req.session.user &&
+            String(req.session.user.role).toLowerCase() === 'admin';
+
+        res.render('incidents/details', {
+            incident,
+            isOwner,
+            isAdmin
+        });
+
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to load incident.';
@@ -121,6 +134,7 @@ async function showIncidentImage(req, res) {
 
 async function showEditForm(req, res) {
     try {
+
         const incident = await incidentModel.getIncidentById(req.params.id);
 
         if (!incident) {
@@ -128,7 +142,19 @@ async function showEditForm(req, res) {
             return res.redirect('/incidents');
         }
 
+        const isOwner =
+            Number(req.session.user.id) === Number(incident.user_id);
+
+        const isAdmin =
+            String(req.session.user.role).toLowerCase() === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            req.session.error = 'You are not allowed to edit this incident.';
+            return res.redirect(`/incidents/${incident.id}`);
+        }
+
         res.render('incidents/edit', { incident });
+
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to load incident.';
@@ -140,6 +166,17 @@ async function updateIncident(req, res) {
     try {
         const { title, description, category, severity, location, status } = req.body;
         const incident = await incidentModel.getIncidentById(req.params.id);
+
+        const isOwner =
+        Number(req.session.user.id) === Number(incident.user_id);
+        // Check if the user is an admin (Delete if error)
+        const isAdmin =
+            String(req.session.user.role).toLowerCase() === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            req.session.error = 'You are not allowed to edit this incident.';
+            return res.redirect(`/incidents/${incident.id}`);
+        }
 
         if (!incident) {
             req.session.error = 'Incident not found.';
@@ -200,9 +237,27 @@ async function updateIncident(req, res) {
 
 async function deleteIncident(req, res) {
     try {
+
+        const incident = await incidentModel.getIncidentById(req.params.id);
+
+        if (!incident) {
+            req.session.error = 'Incident not found.';
+            return res.redirect('/incidents');
+        }
+
+        const isAdmin =
+            String(req.session.user.role).toLowerCase() === 'admin';
+
+        if (!isAdmin) {
+            req.session.error = 'Only administrators can delete incidents.';
+            return res.redirect(`/incidents/${incident.id}`);
+        }
+
         await incidentModel.deleteIncident(req.params.id);
+
         req.session.success = 'Incident deleted successfully.';
         res.redirect('/incidents');
+
     } catch (error) {
         console.error(error);
         req.session.error = 'Unable to delete incident.';

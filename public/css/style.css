@@ -1128,7 +1128,7 @@ p{
 
 .dashboard-view-stage{
 
-    overflow:hidden;
+    overflow:visible;
 
 }
 
@@ -1142,7 +1142,7 @@ p{
 
 .dashboard-reports-panel{
 
-    max-height:700px;
+    max-height:none;
     opacity:1;
     transform:translateY(0);
 
@@ -1152,6 +1152,7 @@ p{
 
     max-height:0;
     opacity:0;
+    overflow:hidden;
     transform:translateY(34px);
     pointer-events:none;
 
