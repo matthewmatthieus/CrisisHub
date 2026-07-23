@@ -156,7 +156,30 @@
 
         map.setView(marker.getLatLng(), 14, { animate: true });
         marker.openTooltip();
+        map.once('popupopen', ({ popup }) => centerPopupInMap(popup));
         marker.openPopup();
+    }
+
+    function centerPopupInMap(popup) {
+        const popupElement = popup && popup.getElement();
+
+        if (!map || !popupElement) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            const mapBounds = mapContainer.getBoundingClientRect();
+            const popupBounds = popupElement.getBoundingClientRect();
+            const mapCenterX = mapBounds.left + (mapBounds.width / 2);
+            const mapCenterY = mapBounds.top + (mapBounds.height / 2);
+            const popupCenterX = popupBounds.left + (popupBounds.width / 2);
+            const popupCenterY = popupBounds.top + (popupBounds.height / 2);
+
+            map.panBy([
+                popupCenterX - mapCenterX,
+                popupCenterY - mapCenterY
+            ], { animate: true });
+        });
     }
 
     function resetMapView() {
@@ -228,6 +251,7 @@
                 marker.on('click', () => {
                     const zoomAfterClick = Math.max(map.getZoom() - 2, defaultMapZoom - 1);
                     map.setView(marker.getLatLng(), zoomAfterClick, { animate: true });
+                    map.once('popupopen', ({ popup }) => centerPopupInMap(popup));
                     marker.openPopup();
                 });
 
