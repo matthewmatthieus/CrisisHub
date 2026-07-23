@@ -1211,7 +1211,7 @@ app.post('/matches/:id/reject', requireLogin, async (req, res) => {
     }
 });
 
-app.get('/api/live-incidents', isAuthenticated, async (req, res) => {
+app.get('/api/live-incidents', async (req, res) => {
 
     try {
 
