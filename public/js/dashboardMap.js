@@ -176,8 +176,8 @@
             const popupCenterY = popupBounds.top + (popupBounds.height / 2);
 
             map.panBy([
-                popupCenterX - mapCenterX,
-                popupCenterY - mapCenterY
+                mapCenterX - popupCenterX,
+                mapCenterY - popupCenterY
             ], { animate: true });
         });
     }
