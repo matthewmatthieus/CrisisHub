@@ -12,13 +12,9 @@ const profileRoutes = require('./routes/profileRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authController = require('./controllers/authController');
-<<<<<<< HEAD
-const { isAuthenticated, isAdmin, ensureAuthenticated } = require("./middleware/authMiddleware");
-
-=======
-const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
+const { isAuthenticated, isAdmin, ensureAuthenticated, isModerator } = require('./middleware/authMiddleware');
 const { sendHelpRequestUpdateEmail } = require('./services/emailService');
->>>>>>> 2d65955e590a83a4798ed069003ad576095e6ab1
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
