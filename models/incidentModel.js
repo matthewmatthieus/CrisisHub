@@ -5,7 +5,8 @@ async function getAllIncidents() {
     const [rows] = await db.execute(`
         SELECT
             i.*,
-            u.username
+            u.username,
+            u.email
         FROM incidents i
         JOIN users u
             ON i.user_id = u.id
@@ -20,7 +21,8 @@ async function getIncidentById(id) {
     const [rows] = await db.execute(`
         SELECT
             i.*,
-            u.username
+            u.username,
+            u.email
         FROM incidents i
         JOIN users u
             ON i.user_id = u.id

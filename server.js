@@ -13,6 +13,7 @@ const incidentRoutes = require('./routes/incidentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
+const { sendHelpRequestUpdateEmail } = require('./services/emailService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -163,6 +164,35 @@ async function ensureIncidentImageColumn() {
     }
 
     await migrateLegacyIncidentImages();
+}
+
+async function ensureEmailTables() {
+    const emailColumns = [
+        ['email_verified', 'BOOLEAN NOT NULL DEFAULT TRUE'],
+        ['verification_token_hash', 'VARCHAR(255) NULL'],
+        ['verification_token_expires_at', 'DATETIME NULL'],
+        ['verification_email_sent_at', 'DATETIME NULL']
+    ];
+
+    for (const [name, definition] of emailColumns) {
+        const [columns] = await db.execute(`SHOW COLUMNS FROM users LIKE '${name}'`);
+        if (columns.length === 0) {
+            await db.execute(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);
+        }
+    }
+
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token_hash VARCHAR(255) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_password_reset_token_hash (token_hash),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
 }
 
 async function migrateLegacyIncidentImages() {
@@ -742,6 +772,14 @@ app.post('/helpRequests/:id/update', isAdmin, async (req, res) => {
     const { title, category, quantity_needed, location, urgency, status } = req.body;
 
     try {
+        const [[existingRequest]] = await db.execute(
+            `SELECT hr.*, u.username AS requester_name, u.email AS requester_email
+             FROM help_requests hr
+             LEFT JOIN users u ON hr.user_id = u.id
+             WHERE hr.id = ?`,
+            [req.params.id]
+        );
+
         const [result] = await db.execute(
             `UPDATE help_requests
              SET title = ?, category = ?, quantity_needed = ?, location = ?, urgency = ?, status = ?
@@ -752,6 +790,25 @@ app.post('/helpRequests/:id/update', isAdmin, async (req, res) => {
         if (result.affectedRows === 0) {
             req.session.error = 'Unable to update help request.';
             return res.redirect(`/helpRequests/${req.params.id}/edit`);
+        }
+
+        if (existingRequest && existingRequest.requester_email) {
+            const eventType = status === 'Matched'
+                ? 'accepted'
+                : status === 'Closed'
+                    ? 'closed'
+                    : urgency !== existingRequest.urgency
+                        ? 'urgency_changed'
+                        : null;
+
+            if (eventType) {
+                sendHelpRequestUpdateEmail({
+                    email: existingRequest.requester_email,
+                    name: existingRequest.requester_name,
+                    helpRequestId: req.params.id,
+                    eventType
+                }).catch((emailError) => console.error('Unable to send help request email:', emailError.message));
+            }
         }
 
         req.session.success = 'Help request updated successfully.';
@@ -1219,6 +1276,7 @@ console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
 async function startServer() {
     try {
+        await ensureEmailTables();
         await ensureResourceOfferImageColumn();
         await ensureIncidentImageColumn();
     } catch (error) {

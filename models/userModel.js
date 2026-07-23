@@ -5,7 +5,8 @@ const db = require('../config/db');
  */
 async function findByEmail(email) {
     const [rows] = await db.execute(
-        `SELECT id, username, email, password, role, status,
+        `SELECT id, username, email, password, role, status, email_verified,
+                verification_token_hash, verification_token_expires_at, verification_email_sent_at,
                 reputation_score, profile_picture, created_at, updated_at
          FROM users
          WHERE email = ?
@@ -21,7 +22,8 @@ async function findByEmail(email) {
  */
 async function findByUsername(username) {
     const [rows] = await db.execute(
-        `SELECT id, username, email, password, role, status,
+        `SELECT id, username, email, password, role, status, email_verified,
+                verification_token_hash, verification_token_expires_at, verification_email_sent_at,
                 reputation_score, profile_picture, created_at, updated_at
          FROM users
          WHERE username = ?
@@ -37,7 +39,7 @@ async function findByUsername(username) {
  */
 async function findById(userId) {
     const [rows] = await db.execute(
-        `SELECT id, username, email, role, status,
+        `SELECT id, username, email, role, status, email_verified,
                 reputation_score, profile_picture, created_at, updated_at
          FROM users
          WHERE id = ?
@@ -78,6 +80,40 @@ async function updateProfilePicture(userId, filename) {
          WHERE id = ?`,
         [filename, userId]
     );
+}
+
+async function updateVerificationToken(userId, tokenHash, expiresAt, sentAt = new Date()) {
+    await db.execute(
+        `UPDATE users SET verification_token_hash = ?, verification_token_expires_at = ?, verification_email_sent_at = ? WHERE id = ?`,
+        [tokenHash, expiresAt, sentAt, userId]
+    );
+}
+
+async function findByVerificationToken(tokenHash) {
+    const [rows] = await db.execute(
+        `SELECT id, username, email, email_verified, verification_token_expires_at
+         FROM users WHERE verification_token_hash = ? LIMIT 1`,
+        [tokenHash]
+    );
+    return rows[0] || null;
+}
+
+async function markEmailVerified(userId) {
+    await db.execute(
+        `UPDATE users SET email_verified = TRUE, verification_token_hash = NULL, verification_token_expires_at = NULL WHERE id = ?`,
+        [userId]
+    );
+}
+
+async function updatePassword(userId, passwordHash) {
+    await db.execute('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [passwordHash, userId]);
+}
+
+async function getAdminEmails() {
+    const [rows] = await db.execute(
+        `SELECT email FROM users WHERE LOWER(role) = 'admin' AND status = 'Active' AND email IS NOT NULL`
+    );
+    return rows.map((row) => row.email);
 }
 
 /**
@@ -132,5 +168,10 @@ module.exports = {
     updateProfilePicture,
     increaseReputation,
     decreaseReputation,
-    getReputation
+    getReputation,
+    updateVerificationToken,
+    findByVerificationToken,
+    markEmailVerified,
+    updatePassword,
+    getAdminEmails
 };
