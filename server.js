@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
+const helpRequestRoutes = require('./routes/helpRequest');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,6 +31,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }));
+app.use('/helpRequests', helpRequestRoutes);
 
 // View Engine
 app.set('view engine', 'ejs');

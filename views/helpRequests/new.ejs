@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="d-flex">
+    <%- include('../partials/sidebar') %>
+
+    <main class="flex-grow-1 p-4" style="min-height: 100vh;">
+        <div class="container-fluid" style="max-width: 800px;">
+            <div class="mb-4">
+                <h1 class="h2 text-white fw-bold mb-1">New Help Request</h1>
+                <p class="text-muted mb-0">Create a help request for the community.</p>
+            </div>
+
+            <div class="card bg-dark text-white border-secondary shadow rounded-3">
+                <div class="card-body p-4">
+                    <form action="/helpRequests" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label text-light fw-semibold">Title</label>
+                            <input type="text" name="title" class="form-control bg-dark text-white border-secondary" placeholder="e.g. Water bottles needed" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-light fw-semibold">Category</label>
+                                <select name="category" class="form-select bg-dark text-white border-secondary" required>
+                                    <option value="Water">Water</option>
+                                    <option value="Food">Food</option>
+                                    <option value="Medical">Medical</option>
+                                    <option value="Shelter">Shelter</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-light fw-semibold">Quantity Needed</label>
+                                <input type="number" name="quantity_needed" class="form-control bg-dark text-white border-secondary" min="1" value="1" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-light fw-semibold">Location</label>
+                            <input type="text" name="location" class="form-control bg-dark text-white border-secondary" placeholder="e.g. Jurong West St 51" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-light fw-semibold">Urgency</label>
+                                <select name="urgency" class="form-select bg-dark text-white border-secondary">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-light fw-semibold">Status</label>
+                                <select name="status" class="form-select bg-dark text-white border-secondary">
+                                    <option value="Open">Open</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Resolved">Resolved</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary">
+                            <a href="/helpRequests" class="btn btn-outline-light">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4">Save Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<%- include('../partials/footer') %>
