@@ -249,9 +249,10 @@
                 marker.crisishubItem = item;
 
                 marker.on('click', () => {
-                    const zoomAfterClick = Math.max(map.getZoom() - 2, defaultMapZoom - 1);
-                    map.setView(marker.getLatLng(), zoomAfterClick, { animate: true });
-                    map.once('popupopen', ({ popup }) => centerPopupInMap(popup));
+                    map.panTo(marker.getLatLng(), { animate: true });
+                    map.once('popupopen', ({ popup }) => {
+                        window.setTimeout(() => centerPopupInMap(popup), 300);
+                    });
                     marker.openPopup();
                 });
 
