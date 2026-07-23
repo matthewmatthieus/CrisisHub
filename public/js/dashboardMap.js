@@ -26,6 +26,7 @@
     let mapLoadPromise;
     let isMapVisible = false;
     let markerById = new Map();
+    let countdownTimer;
     const defaultMapCenter = [1.3521, 103.8198];
     const defaultMapZoom = 11;
     const params = new URLSearchParams(window.location.search);
@@ -70,6 +71,12 @@
         }
         if (item.quantity !== undefined && item.quantity !== null) {
             details.push(`<span class="map-popup-detail"><strong>Quantity:</strong> ${escapeHtml(item.quantity)}</span>`);
+        }
+        if (item.type === 'resource' && item.expiresAt) {
+            const countdown = window.CrisisHubExpiry
+                ? window.CrisisHubExpiry.formatCountdown(item.expiresAt)
+                : 'Calculating...';
+            details.push(`<span class="map-popup-detail map-popup-expiry"><strong>Expiry:</strong> ${escapeHtml(countdown)}</span>`);
         }
         if (item.approximate) {
             details.push('<span class="map-popup-approximate">Approximate central Singapore location</span>');
@@ -161,6 +168,19 @@
         map.setView(defaultMapCenter, defaultMapZoom, { animate: true });
     }
 
+    function refreshResourceCountdowns() {
+        markerById.forEach((marker) => {
+            const item = marker.crisishubItem;
+            if (!item || item.type !== 'resource' || !item.expiresAt) {
+                return;
+            }
+
+            const popupContent = buildPopup(item);
+            marker.setPopupContent(popupContent);
+            marker.setTooltipContent(popupContent);
+        });
+    }
+
     async function loadMapItems() {
         if (mapLoadPromise) {
             return mapLoadPromise;
@@ -203,6 +223,8 @@
                     .bindPopup(buildPopup(item))
                     .addTo(layer);
 
+                marker.crisishubItem = item;
+
                 marker.on('click', () => {
                     const zoomAfterClick = Math.max(map.getZoom() - 2, defaultMapZoom - 1);
                     map.setView(marker.getLatLng(), zoomAfterClick, { animate: true });
@@ -213,6 +235,10 @@
             });
 
             hideMapMessage();
+
+            if (!countdownTimer) {
+                countdownTimer = window.setInterval(refreshResourceCountdowns, 1000);
+            }
 
             if (requestedItemId) {
                 focusMarker(requestedItemId);

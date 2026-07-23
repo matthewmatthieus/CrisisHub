@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS resource_offers (
     location VARCHAR(100) NOT NULL,
     notes TEXT,
     image_filename VARCHAR(255),
+    expires_at DATETIME NULL,
     status ENUM('Available', 'Matched', 'Fulfilled', 'Unavailable') NOT NULL DEFAULT 'Available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

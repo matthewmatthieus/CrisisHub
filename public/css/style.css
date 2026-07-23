@@ -260,6 +260,28 @@ p{
 
 }
 
+.resource-expiry-countdown{
+
+    color:#93c5fd;
+    font-weight:700;
+    white-space:nowrap;
+
+}
+
+.resource-expiry-countdown.is-expired,
+.map-popup-expiry{
+
+    color:#facc15;
+
+}
+
+.resource-expiry-choice{
+
+    margin-top:30px;
+    color:var(--text-primary);
+
+}
+
 .resource-thumb{
 
     width:54px;
@@ -1411,6 +1433,12 @@ p{
 
     display:block;
     color:var(--text-secondary);
+
+}
+
+.map-popup-expiry{
+
+    font-weight:700;
 
 }
 

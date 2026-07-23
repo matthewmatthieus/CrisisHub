@@ -118,6 +118,35 @@ async function ensureResourceOfferImageColumn() {
     }
 }
 
+async function ensureResourceOfferExpiryColumn() {
+    const [columns] = await db.execute(
+        `SHOW COLUMNS FROM resource_offers LIKE 'expires_at'`
+    );
+
+    if (columns.length === 0) {
+        await db.execute(
+            `ALTER TABLE resource_offers
+             ADD COLUMN expires_at DATETIME NULL AFTER image_filename`
+        );
+    }
+}
+
+function getResourceExpiry(body) {
+    const expiresSoon = body.expiresSoon === '1';
+    const rawExpiry = String(body.expiresAt || '').trim();
+
+    if (!expiresSoon) {
+        return null;
+    }
+
+    const expiryDate = new Date(rawExpiry);
+    if (!rawExpiry || Number.isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
+        throw new Error('Please provide a future expiry date and time.');
+    }
+
+    return rawExpiry;
+}
+
 async function ensureIncidentImageColumn() {
     const [columns] = await db.execute(
         `SHOW COLUMNS FROM incidents LIKE 'image'`
@@ -829,7 +858,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
                  ORDER BY created_at DESC`
             ),
             db.execute(
-                `SELECT id, item_name, category, quantity, location, status, image_filename
+                `SELECT id, item_name, category, quantity, location, status, image_filename, expires_at
                  FROM resource_offers
                  ORDER BY created_at DESC`
             )
@@ -870,6 +899,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             category: offer.category,
             quantity: offer.quantity,
             imageUrl: offer.image_filename ? `/uploads/resources/${offer.image_filename}` : null,
+            expiresAt: offer.expires_at,
             ...await resolveSingaporeLocation(offer.location)
         })));
 
@@ -969,12 +999,13 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
     }
 
     try {
+        const expiresAt = getResourceExpiry(req.body);
         imageFilename = await saveResourceOfferImage(req);
 
         const [result] = await db.execute(
             `INSERT INTO resource_offers
-                (user_id, category, item_name, quantity, location, notes, image_filename, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'Available')`,
+                (user_id, category, item_name, quantity, location, notes, image_filename, expires_at, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Available')`,
             [
                 req.session.user.id,
                 category,
@@ -982,7 +1013,8 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
                 quantity,
                 location.trim(),
                 notes || null,
-                imageFilename
+                imageFilename,
+                expiresAt
             ]
         );
 
@@ -1089,12 +1121,13 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
             return res.redirect('/resourceOffers');
         }
 
+        const expiresAt = getResourceExpiry(req.body);
         imageFilename = await saveResourceOfferImage(req);
         const nextImageFilename = imageFilename || offer.image_filename || null;
 
         const [result] = await db.execute(
             `UPDATE resource_offers
-             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, image_filename = ?, status = ?
+             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, image_filename = ?, expires_at = ?, status = ?
              WHERE id = ?`,
             [
                 category,
@@ -1103,6 +1136,7 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
                 location.trim(),
                 notes || null,
                 nextImageFilename,
+                expiresAt,
                 status,
                 req.params.id
             ]
@@ -1255,6 +1289,7 @@ async function startServer() {
     try {
         await ensureEmailTables();
         await ensureResourceOfferImageColumn();
+        await ensureResourceOfferExpiryColumn();
         await ensureIncidentImageColumn();
     } catch (error) {
         console.error('Unable to prepare image upload columns:', error.message);
