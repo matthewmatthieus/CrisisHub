@@ -1,77 +1,118 @@
-<div class="page-header">
-    <div>
-        <h1>Help Requests</h1>
-        <p>Review and manage community requests for urgent assistance.</p>
-    </div>
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
 
-    <% if (isAdmin) { %>
-        <div class="page-actions">
-            <a class="btn btn-primary" href="/helpRequests/new">
-                <i class="bi bi-plus-circle me-1"></i>
-                New Request
-            </a>
+<div class="d-flex">
+    <!-- Sidebar -->
+    <%- include('../partials/sidebar') %>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow-1 p-4" style="min-height: 100vh;">
+        <div class="container-fluid">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 text-white fw-bold mb-1">Help Requests</h1>
+                    <p class="text-muted mb-0">Review and manage community requests for urgent assistance.</p>
+                </div>
+
+                <% if (isAdmin) { %>
+                    <div>
+                        <a class="btn btn-primary shadow-sm" href="/helpRequests/new">
+                            <i class="bi bi-plus-lg me-1"></i> New Request
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <!-- Data Table Card -->
+            <div class="card bg-dark text-white border-secondary shadow rounded-3 overflow-hidden">
+                <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 fw-bold text-white">
+                        <i class="bi bi-life-preserver text-danger me-2"></i> Open Help Requests
+                    </h5>
+                    <span class="badge bg-secondary rounded-pill px-3 py-2"><%= requests.length %> requests</span>
+                </div>
+
+                <div class="card-body p-0">
+                    <% if (requests.length === 0) { %>
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox text-muted display-4"></i>
+                            <p class="text-muted mt-3">No help requests have been submitted yet.</p>
+                        </div>
+                    <% } else { %>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle mb-0">
+                                <thead class="bg-secondary text-white text-uppercase small" style="--bs-table-bg: #2b3035;">
+                                    <tr>
+                                        <th class="py-3 px-3 text-light">ID</th>
+                                        <th class="py-3 text-light">Title</th>
+                                        <th class="py-3 text-light">Category</th>
+                                        <th class="py-3 text-light">Urgency</th>
+                                        <th class="py-3 text-light">Qty</th>
+                                        <th class="py-3 text-light">Location</th>
+                                        <th class="py-3 text-light">User ID</th>
+                                        <th class="py-3 px-3 text-end text-light">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% requests.forEach((request) => { %>
+                                        <tr>
+                                            <td>#<%= request.id %></td>
+                                            <td class="fw-bold"><%= request.title %></td>
+                                            <td>
+                                                <span class="badge border border-info text-info">
+                                                    <%= request.category %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <% if (request.urgency === 'Critical') { %>
+                                                    <span class="badge bg-danger"><%= request.urgency %></span>
+                                                <% } else if (request.urgency === 'High') { %>
+                                                    <span class="badge bg-warning text-dark"><%= request.urgency %></span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary"><%= request.urgency %></span>
+                                                <% } %>
+                                            </td>
+                                            <td><%= request.quantity_needed %></td>
+                                            <td><%= request.location %></td>
+                                            <td class="text-muted">User #<%= request.user_id %></td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <a class="btn btn-outline-light btn-sm" href="/helpRequests/<%= request.id %>">
+                                                        Details
+                                                    </a>
+                                                    <% if (isAdmin) { %>
+                                                        <a class="btn btn-outline-warning btn-sm" href="/helpRequests/<%= request.id %>/edit">
+                                                            Edit
+                                                        </a>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
         </div>
-    <% } %>
+    </main>
 </div>
 
-<% if (success) { %>
-    <div class="alert alert-success"><%= success %></div>
-<% } %>
-
-<% if (error) { %>
-    <div class="alert alert-danger"><%= error %></div>
-<% } %>
-
-<div class="content-card">
-    <div class="card-header">
-        <h2>
-            <i class="bi bi-life-preserver"></i>
-            Open Help Requests
-        </h2>
-        <span class="text-secondary"><%= requests.length %> requests</span>
-    </div>
-
-    <% if (requests.length === 0) { %>
-        <p class="empty-state">No help requests have been submitted yet.</p>
-    <% } else { %>
-        <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Urgency</th>
-                        <th>Quantity</th>
-                        <th>Location</th>
-                        <th>Status</th>
-                        <th>Requester</th>
-                        <th class="text-end">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% requests.forEach((request) => { %>
-                        <tr>
-                            <td><strong><%= request.title %></strong></td>
-                            <td><%= request.category %></td>
-                            <td><%= request.urgency %></td>
-                            <td><%= request.quantity_needed %></td>
-                            <td><%= request.location %></td>
-                            <td><span class="status-pill"><%= request.status %></span></td>
-                            <td><%= request.requester || 'Unknown' %></td>
-                            <td class="text-end">
-                                <a class="btn btn-outline-light btn-sm" href="/helpRequests/<%= request.id %>">
-                                    Details
-                                </a>
-                                <% if (isAdmin) { %>
-                                    <a class="btn btn-outline-light btn-sm" href="/helpRequests/<%= request.id %>/edit">
-                                        Edit
-                                    </a>
-                                <% } %>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } %>
-</div>
+<%- include('../partials/footer') %>

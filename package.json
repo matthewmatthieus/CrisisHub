@@ -19,5 +19,21 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
-  }
+  },
+  "name": "crisishub",
+  "version": "1.0.0",
+  "description": "CrisisHub is a Node.js, Express, EJS, and MySQL web application for community crisis reporting and emergency resource coordination.",
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matthewmatthieus/CrisisHub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/matthewmatthieus/CrisisHub/issues"
+  },
+  "homepage": "https://github.com/matthewmatthieus/CrisisHub#readme"
 }

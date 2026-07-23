@@ -14,6 +14,7 @@ const fixitRoutes = require('./routes/fixitRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
+const helpRequestRoutes = require('./routes/helpRequest');
 const { sendHelpRequestUpdateEmail } = require('./services/emailService');
 
 const app = express();
@@ -45,6 +46,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }));
+app.use('/helpRequests', helpRequestRoutes);
 
 // View Engine
 app.set('view engine', 'ejs');

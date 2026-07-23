@@ -1,221 +1,147 @@
 <nav class="navbar navbar-expand-lg top-navbar">
-
     <div class="container-fluid">
 
         <!-- Logo -->
         <a class="navbar-brand d-flex align-items-center" href="/">
-
             <div class="logo-icon">
                 <i class="bi bi-shield-fill-check"></i>
             </div>
-
             <div class="ms-2">
-
                 <div class="logo-title">
                     <span class="text-success">Crisis</span><span class="text-danger">Hub</span>
                 </div>
-
                 <small class="logo-subtitle">
                     Community Incident Reporting
                 </small>
-
             </div>
-
         </a>
-
 
         <!-- Mobile Toggle -->
         <button class="navbar-toggler border-0 shadow-none"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#navbarContent">
-
             <span class="navbar-toggler-icon"></span>
-
         </button>
-
 
         <div class="collapse navbar-collapse" id="navbarContent">
 
+            <!-- Safe path variable resolution -->
+            <% const path = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : ''; %>
+            <% const mapType = (typeof currentMapType !== 'undefined') ? currentMapType : null; %>
+
             <!-- Main Navigation -->
             <ul class="navbar-nav ms-4">
-
                 <li class="nav-item">
-                    <a class="nav-link <%= currentPath === '/' && !currentMapType ? 'active' : '' %>" href="/">
-                        <i class="bi bi-rss-fill"></i>
-                        Feed
+                    <a class="nav-link <%= (path === '/' && !mapType) ? 'active' : '' %>" href="/">
+                        <i class="bi bi-rss-fill"></i> Feed
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <%= currentPath.startsWith('/incidents') ? 'active' : '' %>" href="/incidents">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        Incidents
+                    <a class="nav-link <%= path.startsWith('/incidents') ? 'active' : '' %>" href="/incidents">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Incidents
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <%= currentPath.startsWith('/helpRequests') ? 'active' : '' %>" href="/helpRequests">
-                        <i class="bi bi-life-preserver"></i>
-                        Help
+                    <a class="nav-link <%= path.startsWith('/helpRequests') ? 'active' : '' %>" href="/helpRequests">
+                        <i class="bi bi-life-preserver"></i> Help
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <%= currentPath.startsWith('/resourceOffers') ? 'active' : '' %>" href="/resourceOffers">
-                        <i class="bi bi-box-seam"></i>
-                        Resources
+                    <a class="nav-link <%= path.startsWith('/resourceOffers') ? 'active' : '' %>" href="/resourceOffers">
+                        <i class="bi bi-box-seam"></i> Resources
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link <%= currentPath.startsWith('/fixit') ? 'active' : '' %>" href="/fixit">
-                        <i class="bi bi-tools"></i>
-                        FixIt SG
+                    <a class="nav-link <%= path.startsWith('/fixit') ? 'active' : '' %>" href="/fixit">
+                        <i class="bi bi-tools"></i> FixIt SG
                     </a>
                 </li>
-
             </ul>
-
 
             <!-- Right Actions -->
             <div class="ms-auto d-flex align-items-center gap-3">
-
                 <span class="system-status">
-                    <span class="status-dot"></span>
-                    System Online
+                    <span class="status-dot"></span> System Online
                 </span>
 
-
-                <% if (currentUser) { %>
-
+                <% if (typeof currentUser !== 'undefined' && currentUser) { %>
                     <span class="system-status">
-
                         <i class="bi bi-person-check me-1"></i>
-
                         <%= currentUser.username || currentUser.name %>
-
                     </span>
-
 
                     <a class="btn btn-outline-light btn-sm report-btn" href="/profile">
                         Profile
                     </a>
 
-
                     <a class="btn btn-outline-light btn-sm report-btn" href="/auth/logout">
                         Logout
                     </a>
-
-
                 <% } else { %>
-
                     <a class="btn btn-primary btn-sm report-btn" href="/auth/login">
-
-                        <i class="bi bi-person-check me-1"></i>
-
-                        Login
-
+                        <i class="bi bi-person-check me-1"></i> Login
                     </a>
-
 
                     <a class="btn btn-outline-light btn-sm report-btn" href="/auth/register">
                         Register
                     </a>
-
                 <% } %>
-
             </div>
 
         </div>
-
     </div>
-
 </nav>
 
-
 <!-- Live Ticker -->
-
 <div class="live-ticker">
-
     <span class="live-label">
-
-        <span class="live-dot"></span>
-
-        LIVE
-
+        <span class="live-dot"></span> LIVE
     </span>
-
     <marquee scrollamount="5" id="liveTicker">
-
         Loading latest incidents...
-
     </marquee>
-
 </div>
 
-
 <script>
-
     async function loadLiveIncidents() {
-
         const ticker = document.getElementById('liveTicker');
-
         try {
-
             const response = await fetch('/api/live-incidents');
 
             if (!response.ok) {
-
                 throw new Error(`HTTP error: ${response.status}`);
-
             }
 
             const incidents = await response.json();
 
-
             if (!incidents || incidents.length === 0) {
-
                 ticker.textContent = 'No recent incidents reported.';
-
                 return;
-
             }
 
-
             ticker.innerHTML = incidents
-
                 .map(incident => `
-
                     <span style="cursor: pointer;"
                           onclick="window.location.href='/incidents/${incident.id}'">
-
-                        ${incident.title} near ${incident.location}
-                        (${incident.status})
-
+                        ${incident.title} near ${incident.location} (${incident.status})
                     </span>
-
                 `)
-
                 .join(' &nbsp; • &nbsp; ');
 
-
         } catch (error) {
-
             console.error('Unable to load live incidents:', error);
-
             ticker.textContent = 'Unable to load latest incidents.';
-
         }
-
     }
-
 
     // Load incidents immediately
     loadLiveIncidents();
 
-
     // Refresh every 30 seconds
     setInterval(loadLiveIncidents, 30000);
-
 </script>
