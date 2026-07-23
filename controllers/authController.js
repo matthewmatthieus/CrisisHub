@@ -3,6 +3,7 @@ const { validationResult } = require('express-validator');
 const userModel = require('../models/userModel');
 const profileModel = require('../models/profileModel');
 const activityModel = require('../models/activityModel');
+const db = require('../config/db');
 const passwordResetModel = require('../models/passwordResetModel');
 const { createSecureToken, hashToken } = require('../services/tokenService');
 const {
@@ -308,9 +309,34 @@ async function showDashboard(req, res) {
         const user = await userModel.findById(req.session.user.user_id);
         const activity = await activityModel.getByUserId(req.session.user.user_id, 10);
 
+        const [[active]] = await db.execute(
+            "SELECT COUNT(*) AS total FROM incidents WHERE status != 'Resolved'"
+        );
+        const [[critical]] = await db.execute(
+            "SELECT COUNT(*) AS total FROM incidents WHERE severity = 'Critical'"
+        );
+        const [[pending]] = await db.execute(`
+            SELECT COUNT(*) AS total
+            FROM incidents i
+            LEFT JOIN incident_votes iv
+                ON i.id = iv.incident_id
+                AND iv.vote_type = 'confirm'
+            WHERE iv.vote_id IS NULL
+              AND i.status = 'Active'
+        `);
+        const [[resolved]] = await db.execute(
+            "SELECT COUNT(*) AS total FROM incidents WHERE status = 'Resolved'"
+        );
+
         return res.render('index', {
             user,
-            activity
+            activity,
+            stats: {
+                activeIncidents: active.total,
+                criticalIncidents: critical.total,
+                pendingVerification: pending.total,
+                resolvedIncidents: resolved.total
+            }
         });
     } catch (error) {
         console.error(error);
