@@ -63,7 +63,7 @@ async function createIncident(req, res) {
             image: null,
             image_data: uploadedImage ? uploadedImage.data : null,
             image_mime_type: uploadedImage ? uploadedImage.mimeType : null,
-            user_id: req.session.user.id
+            user_id: req.session.user ? req.session.user.id : null
         });
 
         if (['High', 'Critical'].includes(severity)) {

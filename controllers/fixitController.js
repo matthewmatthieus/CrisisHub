@@ -7,11 +7,13 @@ exports.showAllFixits = async (req, res) => {
     try {
 
         const [reports] = await db.execute(`
-            SELECT f.*, u.username
-            FROM fixit_reports f
-            LEFT JOIN users u
-            ON f.user_id = u.id
-            ORDER BY f.created_at DESC
+        SELECT
+            f.*,
+            COALESCE(u.username, 'Guest') AS username
+        FROM fixit_reports f
+        LEFT JOIN users u
+        ON f.user_id = u.id
+        ORDER BY f.created_at DESC
         `);
 
         res.render("fixit/index", {
@@ -81,7 +83,7 @@ exports.createFixit = async (req, res) => {
                 location,
                 imageData,
                 imageMime,
-                req.session.user.id
+                req.session.user ? req.session.user.id : null
             ]
         );
 
@@ -105,11 +107,13 @@ exports.showFixit = async (req, res) => {
 
         const [rows] = await db.execute(
             `
-            SELECT f.*, u.username
+            SELECT
+                f.*,
+                COALESCE(u.username, 'Guest') AS username
             FROM fixit_reports f
             LEFT JOIN users u
-            ON f.user_id=u.id
-            WHERE f.id=?
+            ON f.user_id = u.id
+            WHERE f.id = ?
             `,
             [req.params.id]
         );

@@ -166,11 +166,72 @@
 
     </span>
 
+    <marquee scrollamount="5" id="liveTicker">
 
-    <marquee scrollamount="5">
-
-        Fallen tree reported near NTU • Flash flood along Bukit Timah Road • Phishing scam targeting elderly • Streetlight outage at Jurong West
+        Loading latest incidents...
 
     </marquee>
 
 </div>
+
+<script>
+
+    async function loadLiveIncidents() {
+
+        const ticker = document.getElementById('liveTicker');
+
+        try {
+
+            const response = await fetch('/api/live-incidents');
+
+            if (!response.ok) {
+
+                throw new Error(`HTTP error: ${response.status}`);
+
+            }
+
+            const incidents = await response.json();
+
+
+            if (!incidents || incidents.length === 0) {
+
+                ticker.textContent = 'No recent incidents reported.';
+
+                return;
+
+            }
+
+
+            ticker.innerHTML = incidents
+
+                .map(incident => `
+
+                    <a href="/incidents/${incident.id}"
+                       style="color: inherit; text-decoration: none;">
+
+                        ${incident.title} near ${incident.location}
+                        (${incident.status})
+
+                    </a>
+
+                `)
+
+                .join(' &nbsp; • &nbsp; ');
+
+
+        } catch (error) {
+
+            console.error('Unable to load live incidents:', error);
+
+            ticker.textContent = 'Unable to load latest incidents.';
+
+        }
+
+    }
+
+
+    loadLiveIncidents();
+
+    setInterval(loadLiveIncidents, 30000);
+
+</script>

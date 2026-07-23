@@ -94,19 +94,28 @@ app.use(async (req, res, next) => {
         helpRequests: 0,
         resourceOffers: 0,
         fixit: 0,
-        verification: 3
+        verification: 0
     };
 
     try {
         const [[resourceCount]] = await db.execute(
             'SELECT COUNT(*) AS count FROM resource_offers'
         );
+
         const [[helpRequestCount]] = await db.execute(
             'SELECT COUNT(*) AS count FROM help_requests'
         );
+
         const [[incidentCount]] = await db.execute(
             'SELECT COUNT(*) AS count FROM incidents'
         );
+
+        const [[verificationCount]] = await db.execute(`
+            SELECT COUNT(*) AS count
+            FROM incidents
+            WHERE status = 'Active'
+        `);
+
         let fixitCount = 0;
 
         try {
@@ -114,15 +123,22 @@ app.use(async (req, res, next) => {
                 'SELECT COUNT(*) AS count FROM fixit_reports'
             );
             fixitCount = Number(fixitRow.count) || 0;
-        } catch (_error) {
+        } catch (_) {
             fixitCount = 0;
         }
 
-        res.locals.sidebarCounts.resourceOffers = resourceCount.count;
-        res.locals.sidebarCounts.helpRequests = helpRequestCount.count;
-        res.locals.sidebarCounts.incidents = incidentCount.count;
+        res.locals.sidebarCounts.resourceOffers = Number(resourceCount.count);
+        res.locals.sidebarCounts.helpRequests = Number(helpRequestCount.count);
+        res.locals.sidebarCounts.incidents = Number(incidentCount.count);
+        res.locals.sidebarCounts.verification = Number(verificationCount.count);
         res.locals.sidebarCounts.fixit = fixitCount;
-        res.locals.sidebarCounts.allReports = resourceCount.count + helpRequestCount.count + incidentCount.count + fixitCount;
+
+        res.locals.sidebarCounts.allReports =
+            Number(resourceCount.count) +
+            Number(helpRequestCount.count) +
+            Number(incidentCount.count) +
+            Number(fixitCount);
+
     } catch (error) {
         console.error('Unable to load sidebar counts:', error.message);
     }
@@ -1291,6 +1307,31 @@ app.post('/matches/:id/reject', requireLogin, async (req, res) => {
 });
 app.use('/verification', verificationRoutes);
 
+app.get('/api/live-incidents', async (req, res) => {
+
+    try {
+
+        const [incidents] = await db.execute(
+            `SELECT id, title, location, status
+             FROM incidents
+             ORDER BY created_at DESC
+             LIMIT 10`
+        );
+
+        res.json(incidents);
+
+    } catch (error) {
+
+        console.error('Unable to load live incidents:', error);
+
+        res.status(500).json({
+            error: 'Unable to load live incidents.'
+        });
+
+    }
+
+});
+
 console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
 async function startServer() {
@@ -1316,7 +1357,7 @@ async function startServer() {
     }
 
     app.listen(PORT, '0.0.0.0', () => {
-        console.log(`CrisisHub running on port ${PORT}`);
+        console.log(`CrisisHub running on port http://localhost:${PORT}`);
     });
 }
 

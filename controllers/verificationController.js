@@ -20,10 +20,18 @@ exports.index = async (req, res) => {
             LEFT JOIN incident_votes v
                 ON i.id = v.incident_id
 
+            WHERE i.status = 'Active'
+            AND NOT EXISTS (
+                SELECT 1
+                FROM incident_votes iv
+                WHERE iv.incident_id = i.id
+                AND iv.user_id = ?
+            )
+
             GROUP BY i.id
 
             ORDER BY i.created_at DESC
-        `);
+        `, [req.session.user.id]);
 
         const results = incidents.map((incident) => {
 
@@ -79,6 +87,31 @@ exports.confirmIncident = async (req, res) => {
             [incidentId, userId]
         );
 
+        // Get latest vote totals
+        const [[votes]] = await db.execute(`
+            SELECT
+                COUNT(CASE WHEN vote_type='confirm' THEN 1 END) AS confirmCount,
+                COUNT(CASE WHEN vote_type='dispute' THEN 1 END) AS disputeCount
+            FROM incident_votes
+            WHERE incident_id=?
+        `, [incidentId]);
+
+        const confidence = verificationService.calculateConfidence(
+            Number(votes.confirmCount),
+            Number(votes.disputeCount)
+        );
+
+        // Auto verify if confidence is high enough
+        if (confidence >= 80) {
+
+            await db.execute(`
+                UPDATE incidents
+                SET status='Verified'
+                WHERE id=?
+            `, [incidentId]);
+
+        }
+
         req.session.success = "Incident confirmed.";
         res.redirect("/");
 
@@ -112,6 +145,29 @@ exports.disputeIncident = async (req, res) => {
             `,
             [incidentId, userId]
         );
+
+        const [[votes]] = await db.execute(`
+            SELECT
+                COUNT(CASE WHEN vote_type='confirm' THEN 1 END) AS confirmCount,
+                COUNT(CASE WHEN vote_type='dispute' THEN 1 END) AS disputeCount
+            FROM incident_votes
+            WHERE incident_id=?
+        `, [incidentId]);
+
+        const confidence = verificationService.calculateConfidence(
+            Number(votes.confirmCount),
+            Number(votes.disputeCount)
+        );
+
+        if (confidence >= 80) {
+
+            await db.execute(`
+                UPDATE incidents
+                SET status='Verified'
+                WHERE id=?
+            `, [incidentId]);
+
+        }
 
         req.session.success = "Incident disputed.";
         res.redirect("/");

@@ -4,34 +4,34 @@ const router = express.Router();
 const fixitController = require('../controllers/fixitController');
 const { isAuthenticated } = require('../middleware/authMiddleware');
 
-// Display all FixIt reports
-router.get('/', isAuthenticated, fixitController.showAllFixits);
+// Public - View all FixIt reports
+router.get('/', fixitController.showAllFixits);
 
-// Display create form
-router.get('/create', isAuthenticated, fixitController.showCreateForm);
+// Public - Create form
+router.get('/create', fixitController.showCreateForm);
 
-// Create FixIt report
-router.post('/create', isAuthenticated, fixitController.createFixit);
+// Public - Submit report
+router.post('/create', fixitController.createFixit);
 
-// Display single report
-router.get('/:id', isAuthenticated, fixitController.showFixit);
+// Public - View report details
+router.get('/:id', fixitController.showFixit);
 
-// Display image
-router.get('/:id/image', isAuthenticated, fixitController.showFixitImage);
+// Public - View image
+router.get('/:id/image', fixitController.showFixitImage);
 
-// Display edit form
+// Logged in only - Edit
 router.get('/:id/edit', isAuthenticated, fixitController.showEditForm);
 
-// Update report
+// Logged in only - Update
 router.post('/:id/edit', isAuthenticated, fixitController.updateFixit);
 
-// Delete report
+// Logged in only - Delete
 router.post('/:id/delete', isAuthenticated, fixitController.deleteFixit);
 
-// Volunteer
+// Logged in only - Volunteer
 router.post('/:id/volunteer', isAuthenticated, fixitController.volunteer);
 
-// Withdraw volunteer
+// Logged in only - Withdraw volunteer
 router.post('/:id/withdraw', isAuthenticated, fixitController.withdrawVolunteer);
 
 module.exports = router;

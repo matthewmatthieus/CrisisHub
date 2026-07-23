@@ -4,27 +4,28 @@ const router = express.Router();
 const incidentController = require('../controllers/incidentController');
 const { isAuthenticated } = require('../middleware/authMiddleware');
 
-// Display all incidents
-router.get('/', isAuthenticated, incidentController.showAllIncidents);
+// Public
+router.get('/', incidentController.showAllIncidents);
 
-// Display create form
-router.get('/create', isAuthenticated, incidentController.showCreateForm);
+// Public
+router.get('/create', incidentController.showCreateForm);
 
-// Create incident
-router.post('/create', isAuthenticated, incidentController.createIncident);
+// Public
+router.post('/create', incidentController.createIncident);
 
-// Display single incident
-router.get('/:id', isAuthenticated, incidentController.showIncident);
+// Public
+router.get('/:id', incidentController.showIncident);
 
-router.get('/:id/image', isAuthenticated, incidentController.showIncidentImage);
+// Public
+router.get('/:id/image', incidentController.showIncidentImage);
 
-// Display edit form
+// Logged-in only
 router.get('/:id/edit', isAuthenticated, incidentController.showEditForm);
 
-// Update incident
+// Logged-in only
 router.post('/:id/edit', isAuthenticated, incidentController.updateIncident);
 
-// Delete incident
+// Logged-in only
 router.post('/:id/delete', isAuthenticated, incidentController.deleteIncident);
 
 module.exports = router;
