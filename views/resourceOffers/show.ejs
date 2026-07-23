@@ -56,10 +56,21 @@
     </div>
 
     <div class="stat-card">
+        <p class="stat-label">Expiry</p>
+        <% if (offer.expires_at) { %>
+            <div class="stat-number stat-text resource-expiry-countdown" data-expiry-countdown data-expires-at="<%= new Date(offer.expires_at).toISOString() %>">Calculating...</div>
+        <% } else { %>
+            <div class="stat-number stat-text">No expiry</div>
+        <% } %>
+    </div>
+
+    <div class="stat-card">
         <p class="stat-label">Matches</p>
         <div class="stat-number"><%= matches.length %></div>
     </div>
 </div>
+
+<script src="/js/expiryCountdown.js"></script>
 
 <div class="content-card">
     <div class="card-header">

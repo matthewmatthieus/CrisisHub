@@ -9,6 +9,8 @@
     <div class="alert alert-danger"><%= error %></div>
 <% } %>
 
+<% const expiryValue = offer && offer.expires_at ? new Date(offer.expires_at).toLocaleString('sv-SE', { timeZone: 'Asia/Singapore' }).replace(' ', 'T').slice(0, 16) : ''; %>
+
 <div class="content-card form-card">
     <form action="<%= formAction %>" method="POST" enctype="multipart/form-data">
         <div class="row g-3">
@@ -56,6 +58,22 @@
                 </select>
             </div>
 
+            <div class="col-md-6">
+                <div class="form-check form-switch resource-expiry-choice">
+                    <input class="form-check-input" id="expiresSoon" name="expiresSoon" type="checkbox" value="1"
+                           <%= offer && offer.expires_at ? 'checked' : '' %>>
+                    <label class="form-check-label" for="expiresSoon">Is this resource expiring soon?</label>
+                </div>
+                <div class="form-text text-secondary">Choose yes when this offer will no longer be available after a specific time.</div>
+            </div>
+
+            <div class="col-md-6" id="expiryDateGroup">
+                <label class="form-label" for="expiresAt">Expiry date and time</label>
+                <input class="form-control" id="expiresAt" name="expiresAt" type="datetime-local"
+                       value="<%= expiryValue %>"
+                       <%= offer && offer.expires_at ? 'required' : '' %>>
+            </div>
+
             <div class="col-12">
                 <label class="form-label" for="notes">Notes</label>
                 <textarea class="form-control" id="notes" name="notes" rows="4"><%= offer ? offer.notes || '' : '' %></textarea>
@@ -88,3 +106,21 @@
         </div>
     </form>
 </div>
+
+<script>
+    (() => {
+        const choice = document.getElementById('expiresSoon');
+        const group = document.getElementById('expiryDateGroup');
+        const input = document.getElementById('expiresAt');
+
+        function syncExpiryInput() {
+            const enabled = choice.checked;
+            group.hidden = !enabled;
+            input.required = enabled;
+            input.disabled = !enabled;
+        }
+
+        choice.addEventListener('change', syncExpiryInput);
+        syncExpiryInput();
+    })();
+</script>

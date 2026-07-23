@@ -45,4 +45,21 @@ mysql -u root -p c237_017_team2_crisishub < database/seed.sql
 npm start
 ```
 
-6. Open `http://localhost:3000` and click `Demo Login` to test the Member 3 feature until the real authentication module is connected.
+6. Open `http://localhost:3000` and sign in with a verified CrisisHub account.
+
+## Deployment
+
+The app is ready for a single-instance Render deployment using the included `render.yaml` blueprint.
+
+Set these environment variables in the hosting provider:
+
+- `NODE_ENV=production`
+- `PORT` is supplied by Render
+- `APP_URL` to the deployed HTTPS URL
+- `SESSION_SECRET` to a long random value
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_SSL=true`
+- `GMAIL_USER`, `GMAIL_APP_PASSWORD`, and `EMAIL_FROM` using a Gmail App Password
+
+The health check is available at `/health`. Do not commit `.env` or provider credentials. File uploads use the local filesystem, so configure persistent storage or move uploads to object storage before using multiple instances.
+
+Email uses Gmail SMTP. Enable 2-Step Verification on the Gmail account, create an App Password, and store that App Password in `GMAIL_APP_PASSWORD`. Never use the normal Gmail password.

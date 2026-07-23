@@ -26,6 +26,7 @@
     let mapLoadPromise;
     let isMapVisible = false;
     let markerById = new Map();
+    let countdownTimer;
     const defaultMapCenter = [1.3521, 103.8198];
     const defaultMapZoom = 11;
     const params = new URLSearchParams(window.location.search);
@@ -70,6 +71,12 @@
         }
         if (item.quantity !== undefined && item.quantity !== null) {
             details.push(`<span class="map-popup-detail"><strong>Quantity:</strong> ${escapeHtml(item.quantity)}</span>`);
+        }
+        if (item.type === 'resource' && item.expiresAt) {
+            const countdown = window.CrisisHubExpiry
+                ? window.CrisisHubExpiry.formatCountdown(item.expiresAt)
+                : 'Calculating...';
+            details.push(`<span class="map-popup-detail map-popup-expiry"><strong>Expiry:</strong> ${escapeHtml(countdown)}</span>`);
         }
         if (item.approximate) {
             details.push('<span class="map-popup-approximate">Approximate central Singapore location</span>');
@@ -149,7 +156,30 @@
 
         map.setView(marker.getLatLng(), 14, { animate: true });
         marker.openTooltip();
+        map.once('popupopen', ({ popup }) => centerPopupInMap(popup));
         marker.openPopup();
+    }
+
+    function centerPopupInMap(popup) {
+        const popupElement = popup && popup.getElement();
+
+        if (!map || !popupElement) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            const mapBounds = mapContainer.getBoundingClientRect();
+            const popupBounds = popupElement.getBoundingClientRect();
+            const mapCenterX = mapBounds.left + (mapBounds.width / 2);
+            const mapCenterY = mapBounds.top + (mapBounds.height / 2);
+            const popupCenterX = popupBounds.left + (popupBounds.width / 2);
+            const popupCenterY = popupBounds.top + (popupBounds.height / 2);
+
+            map.panBy([
+                mapCenterX - popupCenterX,
+                mapCenterY - popupCenterY
+            ], { animate: true });
+        });
     }
 
     function resetMapView() {
@@ -159,6 +189,19 @@
 
         map.closePopup();
         map.setView(defaultMapCenter, defaultMapZoom, { animate: true });
+    }
+
+    function refreshResourceCountdowns() {
+        markerById.forEach((marker) => {
+            const item = marker.crisishubItem;
+            if (!item || item.type !== 'resource' || !item.expiresAt) {
+                return;
+            }
+
+            const popupContent = buildPopup(item);
+            marker.setPopupContent(popupContent);
+            marker.setTooltipContent(popupContent);
+        });
     }
 
     async function loadMapItems() {
@@ -203,9 +246,13 @@
                     .bindPopup(buildPopup(item))
                     .addTo(layer);
 
+                marker.crisishubItem = item;
+
                 marker.on('click', () => {
-                    const zoomAfterClick = Math.max(map.getZoom() - 2, defaultMapZoom - 1);
-                    map.setView(marker.getLatLng(), zoomAfterClick, { animate: true });
+                    map.panTo(marker.getLatLng(), { animate: true });
+                    map.once('popupopen', ({ popup }) => {
+                        window.setTimeout(() => centerPopupInMap(popup), 300);
+                    });
                     marker.openPopup();
                 });
 
@@ -213,6 +260,10 @@
             });
 
             hideMapMessage();
+
+            if (!countdownTimer) {
+                countdownTimer = window.setInterval(refreshResourceCountdowns, 1000);
+            }
 
             if (requestedItemId) {
                 focusMarker(requestedItemId);
