@@ -260,6 +260,14 @@ p{
 
 }
 
+input[type="datetime-local"]::-webkit-calendar-picker-indicator{
+
+    filter:invert(1);
+    opacity:.9;
+    cursor:pointer;
+
+}
+
 .resource-expiry-countdown{
 
     color:#93c5fd;
