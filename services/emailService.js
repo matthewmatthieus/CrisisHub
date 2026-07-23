@@ -67,6 +67,28 @@ async function sendVerificationEmail({ email, name, verificationUrl }) {
 async function sendWelcomeEmail({ email, name }) {
     return actionEmail({ email, name, subject: 'Welcome to CrisisHub', message: 'Your CrisisHub account has been verified successfully. You can now report incidents, request help, access community resources and follow verified community updates.', buttonText: 'Open CrisisHub', url: process.env.APP_URL || 'http://localhost:3000' });
 }
+async function sendProductBriefEmail({ email, name }) {
+    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+    return sendEmail({
+        to: email,
+        subject: 'How CrisisHub helps your community',
+        html: `<div style="font-family:Arial,sans-serif;line-height:1.6;max-width:620px;color:#172033">
+            <h2>How CrisisHub works</h2>
+            <p>Hi ${escapeHtml(name)},</p>
+            <p>CrisisHub connects community reports, help requests, and available resources in one place.</p>
+            <h3>What you can do</h3>
+            <ul>
+                <li><strong>Report incidents:</strong> share what happened and where it happened.</li>
+                <li><strong>Request help:</strong> describe what you need so the community can respond.</li>
+                <li><strong>Offer resources:</strong> list supplies, transport, shelter, or other support.</li>
+                <li><strong>Use the response map:</strong> view incidents, requests, and resources by location.</li>
+                <li><strong>Follow updates:</strong> receive email notifications when relevant reports change.</li>
+            </ul>
+            <p><a href="${escapeHtml(appUrl)}" style="display:inline-block;padding:12px 20px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:8px">Open CrisisHub</a></p>
+            <p>CrisisHub Team</p>
+        </div>`
+    });
+}
 async function sendPasswordResetEmail({ email, name, resetUrl }) {
     return actionEmail({ email, name, subject: 'Reset your CrisisHub password', message: 'A password reset was requested for your account. This link expires in 30 minutes and can only be used once.', buttonText: 'Reset password', url: resetUrl });
 }
@@ -86,4 +108,4 @@ async function sendAdminAlertEmail({ adminEmails, alertType }) {
     return sendEmail({ to: adminEmails, subject: content[0], html: `<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>${escapeHtml(content[0])}</h2><p>${escapeHtml(content[1])}</p><p><a href="${escapeHtml(process.env.APP_URL || 'http://localhost:3000')}">Open CrisisHub</a></p></div>` });
 }
 
-module.exports = { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendIncidentStatusEmail, sendHelpRequestUpdateEmail, sendAdminAlertEmail };
+module.exports = { sendVerificationEmail, sendWelcomeEmail, sendProductBriefEmail, sendPasswordResetEmail, sendIncidentStatusEmail, sendHelpRequestUpdateEmail, sendAdminAlertEmail };
