@@ -1314,6 +1314,10 @@ async function startServer() {
             throw new Error('APP_URL must be configured in production.');
         }
 
+        if (isProduction && (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD)) {
+            throw new Error('GMAIL_USER and GMAIL_APP_PASSWORD must be configured in production.');
+        }
+
         await ensureEmailTables();
         await ensureResourceOfferImageColumn();
         await ensureResourceOfferExpiryColumn();

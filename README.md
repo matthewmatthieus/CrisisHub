@@ -58,6 +58,8 @@ Set these environment variables in the hosting provider:
 - `APP_URL` to the deployed HTTPS URL
 - `SESSION_SECRET` to a long random value
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_SSL=true`
-- `RESEND_API_KEY` and `EMAIL_FROM` using a verified Resend domain
+- `GMAIL_USER`, `GMAIL_APP_PASSWORD`, and `EMAIL_FROM` using a Gmail App Password
 
 The health check is available at `/health`. Do not commit `.env` or provider credentials. File uploads use the local filesystem, so configure persistent storage or move uploads to object storage before using multiple instances.
+
+Email uses Gmail SMTP. Enable 2-Step Verification on the Gmail account, create an App Password, and store that App Password in `GMAIL_APP_PASSWORD`. Never use the normal Gmail password.

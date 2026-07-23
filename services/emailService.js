@@ -1,4 +1,4 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const incidentStatusContent = {
     received: ['Your incident report has been received', 'Your report has been submitted successfully and is awaiting review.'],
@@ -27,12 +27,32 @@ const adminAlertContent = {
 function escapeHtml(value) {
     return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
-function getClient() {
-    if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not configured.');
-    return new Resend(process.env.RESEND_API_KEY);
+let transporter;
+
+function getTransporter() {
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+        throw new Error('GMAIL_USER and GMAIL_APP_PASSWORD are not configured.');
+    }
+
+    if (!transporter) {
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.GMAIL_USER,
+                pass: process.env.GMAIL_APP_PASSWORD
+            }
+        });
+    }
+
+    return transporter;
 }
 async function sendEmail({ to, subject, html }) {
-    return getClient().emails.send({ from: process.env.EMAIL_FROM || 'onboarding@resend.dev', to, subject, html });
+    return getTransporter().sendMail({
+        from: process.env.EMAIL_FROM || process.env.GMAIL_USER,
+        to,
+        subject,
+        html
+    });
 }
 function actionEmail({ email, name, subject, message, buttonText, url }) {
     return sendEmail({
