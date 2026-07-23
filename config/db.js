@@ -8,13 +8,10 @@ const config = {
     database: process.env.DB_NAME,
     port: Number(process.env.DB_PORT) || 3306,
     waitForConnections: true,
-    connectionLimit: 10,
-    ssl: {
-        rejectUnauthorized: true
-    }
+    connectionLimit: 10
 };
 
-if (process.env.DB_SSL === 'true') {
+if ((process.env.DB_SSL || '').toLowerCase() === 'true') {
     config.ssl = {
         rejectUnauthorized: false
     };

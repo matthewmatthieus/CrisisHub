@@ -1,0 +1,132 @@
+<div class="container-fluid py-4">
+
+    <a href="/fixit" class="btn btn-outline-secondary mb-4">
+        <i class="bi bi-arrow-left"></i>
+        Back to FixIt Reports
+    </a>
+
+    <div class="card">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div>
+
+                    <h2 class="fw-bold">
+                        <%= report.title %>
+                    </h2>
+
+                    <div class="mt-2">
+
+                        <span class="badge bg-primary">
+                            <%= report.category %>
+                        </span>
+
+                        <span class="badge bg-warning text-dark">
+                            <%= report.severity %>
+                        </span>
+
+                        <% if (report.status === 'Open') { %>
+
+                            <span class="badge bg-danger">
+                                Open
+                            </span>
+
+                        <% } else if (report.status === 'In Progress') { %>
+
+                            <span class="badge bg-warning text-dark">
+                                In Progress
+                            </span>
+
+                        <% } else { %>
+
+                            <span class="badge bg-success">
+                                Resolved
+                            </span>
+
+                        <% } %>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <h5>Description</h5>
+
+            <p>
+                <%= report.description %>
+            </p>
+
+            <h5>Location</h5>
+
+            <p>
+                <i class="bi bi-geo-alt-fill text-danger"></i>
+                <%= report.location %>
+            </p>
+
+            <% if (report.image_data) { %>
+
+                <hr>
+
+                <img
+                    src="/fixit/<%= report.id %>/image"
+                    class="incident-detail-image"
+                    alt="<%= report.title %> image">
+
+            <% } %>
+
+            <hr>
+
+            <p class="mb-1">
+
+                <strong>Reported By:</strong>
+
+                <%= report.username %>
+
+            </p>
+
+            <p>
+
+                <strong>Reported On:</strong>
+
+                <%= new Date(report.created_at).toLocaleString() %>
+
+            </p>
+
+            <div class="mt-4">
+
+                <a
+                    href="/fixit/<%= report.id %>/edit"
+                    class="btn btn-warning">
+
+                    Edit
+
+                </a>
+
+                <form
+                    action="/fixit/<%= report.id %>/delete"
+                    method="POST"
+                    class="d-inline">
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger"
+                        onclick="return confirm('Delete this report?')">
+
+                        Delete
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

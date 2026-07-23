@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>CrisisHub</title>
+    <title><%= typeof pageTitle !== 'undefined' && pageTitle ? pageTitle : 'CrisisHub' %></title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -64,6 +64,7 @@
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
 
+    <script src="/js/expiryCountdown.js"></script>
     <script src="/js/dashboardMap.js"></script>
     <script src="/js/locationAutocomplete.js"></script>
 

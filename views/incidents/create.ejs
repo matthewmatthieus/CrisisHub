@@ -1,0 +1,132 @@
+<div class="container-fluid py-4">
+
+    <h2 class="fw-bold mb-4">
+        Report New Incident
+    </h2>
+
+    <form action="/incidents/create" method="POST" enctype="multipart/form-data">
+
+        <div class="card p-4">
+
+            <div class="mb-3">
+
+                <label class="form-label">Title</label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    name="title"
+                    required>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">Description</label>
+
+                <textarea
+                    class="form-control"
+                    rows="5"
+                    name="description"
+                    required></textarea>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Category
+                    </label>
+
+                    <select
+                        class="form-select"
+                        name="category">
+
+                        <option>Flood</option>
+                        <option>Fire</option>
+                        <option>Road Accident</option>
+                        <option>Power Outage</option>
+                        <option>Medical</option>
+                        <option>Others</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Severity
+                    </label>
+
+                    <select
+                        class="form-select"
+                        name="severity">
+
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option>Critical</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            <div class="mt-3">
+
+                <label class="form-label">
+                    Location
+                </label>
+
+                <input
+                    class="form-control"
+                    name="location"
+                    required>
+
+            </div>
+
+            <div class="mt-3">
+
+                <label class="form-label">
+                    Image
+                </label>
+
+                <input
+                    class="form-control"
+                    type="file"
+                    name="image"
+                    accept="image/png,image/jpeg,image/gif,image/webp">
+
+                <div class="form-text text-secondary">
+                    Upload a PNG, JPG, GIF, or WEBP image up to 2MB.
+                </div>
+
+            </div>
+
+            <div class="mt-4">
+
+                <button class="btn btn-primary">
+
+                    Submit Incident
+
+                </button>
+
+                <a
+                    href="/incidents"
+                    class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>

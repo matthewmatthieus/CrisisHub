@@ -4,6 +4,7 @@
     const mapPanel = document.getElementById('dashboardMapPanel');
     const mapContainer = document.getElementById('dashboardMap');
     const mapMessage = document.getElementById('dashboardMapMessage');
+    const mapReset = document.getElementById('dashboardMapReset');
     const filterButtons = document.querySelectorAll('[data-map-type]');
 
     if (!mapToggle || !reportsPanel || !mapPanel || !mapContainer || typeof L === 'undefined') {
@@ -25,6 +26,9 @@
     let mapLoadPromise;
     let isMapVisible = false;
     let markerById = new Map();
+    let countdownTimer;
+    const defaultMapCenter = [1.3521, 103.8198];
+    const defaultMapZoom = 11;
     const params = new URLSearchParams(window.location.search);
     const requestedMapType = params.get('map');
     const requestedItemId = params.get('item');
@@ -47,6 +51,9 @@
     }
 
     function buildPopup(item) {
+        const imageMarkup = item.imageUrl
+            ? `<img class="map-popup-image" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title || 'Resource')} image">`
+            : '';
         const details = [
             `<span class="map-popup-detail"><strong>Type:</strong> ${escapeHtml(getTypeLabel(item.type))}</span>`,
             `<span class="map-popup-detail"><strong>Location:</strong> ${escapeHtml(item.location || 'Unknown')}</span>`,
@@ -65,16 +72,17 @@
         if (item.quantity !== undefined && item.quantity !== null) {
             details.push(`<span class="map-popup-detail"><strong>Quantity:</strong> ${escapeHtml(item.quantity)}</span>`);
         }
+        if (item.type === 'resource' && item.expiresAt) {
+            const countdown = window.CrisisHubExpiry
+                ? window.CrisisHubExpiry.formatCountdown(item.expiresAt)
+                : 'Calculating...';
+            details.push(`<span class="map-popup-detail map-popup-expiry"><strong>Expiry:</strong> ${escapeHtml(countdown)}</span>`);
+        }
         if (item.approximate) {
             details.push('<span class="map-popup-approximate">Approximate central Singapore location</span>');
         }
 
-        const actionUrl = item.url || item.mapUrl;
-        const action = actionUrl
-            ? `<a class="map-popup-action" href="${escapeHtml(actionUrl)}">${escapeHtml(item.actionLabel || 'Open Details')}</a>`
-            : '';
-
-        return `<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}${action}`;
+        return `${imageMarkup}<strong class="map-popup-title">${escapeHtml(item.title || 'Untitled report')}</strong>${details.join('')}`;
     }
 
     function showMapMessage(message) {
@@ -97,7 +105,7 @@
             minZoom: 10,
             maxBounds: [[1.16, 103.55], [1.52, 104.12]],
             maxBoundsViscosity: 0.7
-        }).setView([1.3521, 103.8198], 11);
+        }).setView(defaultMapCenter, defaultMapZoom);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -148,7 +156,52 @@
 
         map.setView(marker.getLatLng(), 14, { animate: true });
         marker.openTooltip();
+        map.once('popupopen', ({ popup }) => centerPopupInMap(popup));
         marker.openPopup();
+    }
+
+    function centerPopupInMap(popup) {
+        const popupElement = popup && popup.getElement();
+
+        if (!map || !popupElement) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            const mapBounds = mapContainer.getBoundingClientRect();
+            const popupBounds = popupElement.getBoundingClientRect();
+            const mapCenterX = mapBounds.left + (mapBounds.width / 2);
+            const mapCenterY = mapBounds.top + (mapBounds.height / 2);
+            const popupCenterX = popupBounds.left + (popupBounds.width / 2);
+            const popupCenterY = popupBounds.top + (popupBounds.height / 2);
+
+            map.panBy([
+                mapCenterX - popupCenterX,
+                mapCenterY - popupCenterY
+            ], { animate: true });
+        });
+    }
+
+    function resetMapView() {
+        if (!map) {
+            return;
+        }
+
+        map.closePopup();
+        map.setView(defaultMapCenter, defaultMapZoom, { animate: true });
+    }
+
+    function refreshResourceCountdowns() {
+        markerById.forEach((marker) => {
+            const item = marker.crisishubItem;
+            if (!item || item.type !== 'resource' || !item.expiresAt) {
+                return;
+            }
+
+            const popupContent = buildPopup(item);
+            marker.setPopupContent(popupContent);
+            marker.setTooltipContent(popupContent);
+        });
     }
 
     async function loadMapItems() {
@@ -193,10 +246,24 @@
                     .bindPopup(buildPopup(item))
                     .addTo(layer);
 
+                marker.crisishubItem = item;
+
+                marker.on('click', () => {
+                    map.panTo(marker.getLatLng(), { animate: true });
+                    map.once('popupopen', ({ popup }) => {
+                        window.setTimeout(() => centerPopupInMap(popup), 300);
+                    });
+                    marker.openPopup();
+                });
+
                 markerById.set(item.id, marker);
             });
 
             hideMapMessage();
+
+            if (!countdownTimer) {
+                countdownTimer = window.setInterval(refreshResourceCountdowns, 1000);
+            }
 
             if (requestedItemId) {
                 focusMarker(requestedItemId);
@@ -262,6 +329,10 @@
             setLayerVisible(type, isActive);
         });
     });
+
+    if (mapReset) {
+        mapReset.addEventListener('click', resetMapView);
+    }
 
     if (Object.prototype.hasOwnProperty.call(markerLayers, requestedMapType)) {
         showMap(requestedMapType);

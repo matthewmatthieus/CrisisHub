@@ -1,0 +1,82 @@
+<div class="container mt-4">
+
+    <h2>Create FixIt Report</h2>
+
+    <form action="/fixit/create" method="POST" enctype="multipart/form-data">
+
+        <div class="mb-3">
+            <label>Title</label>
+            <input
+                type="text"
+                class="form-control"
+                name="title"
+                required>
+        </div>
+
+        <div class="mb-3">
+            <label>Description</label>
+            <textarea
+                class="form-control"
+                name="description"
+                rows="5"
+                required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label>Category</label>
+
+            <select class="form-control" name="category">
+
+                <option>Road</option>
+                <option>Lighting</option>
+                <option>Drainage</option>
+                <option>Cleanliness</option>
+                <option>Others</option>
+
+            </select>
+        </div>
+
+        <div class="mb-3">
+
+            <label>Severity</label>
+
+            <select class="form-control" name="severity">
+
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+
+            </select>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Location</label>
+
+            <input
+                type="text"
+                class="form-control"
+                name="location"
+                required>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Image</label>
+
+            <input
+                type="file"
+                class="form-control"
+                name="image">
+
+        </div>
+
+        <button class="btn btn-primary">
+            Submit Report
+        </button>
+
+    </form>
+
+</div>

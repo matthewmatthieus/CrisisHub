@@ -3,16 +3,31 @@ const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const methodOverride = require('method-override');
 const fileUpload = require('express-fileupload');
+const path = require('path');
+const fs = require('fs/promises');
 const db = require('./config/db');
 const verificationRoutes = require('./routes/verification');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const incidentRoutes = require('./routes/incidentRoutes');
+const fixitRoutes = require('./routes/fixitRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const authController = require('./controllers/authController');
 const { isAuthenticated, isAdmin } = require('./middleware/authMiddleware');
 const helpRequestRoutes = require('./routes/helpRequest');
+const { sendHelpRequestUpdateEmail } = require('./services/emailService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const resourceUploadDir = path.join(__dirname, 'public', 'uploads', 'resources');
+const incidentUploadDir = path.join(__dirname, 'public', 'uploads', 'incidents');
+const allowedResourceImageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
+const allowedResourceImageMimeTypes = new Set([
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp'
+]);
 
 // Middleware
 app.use(express.static('public'));
@@ -57,6 +72,7 @@ app.use(async (req, res, next) => {
         incidents: 0,
         helpRequests: 0,
         resourceOffers: 0,
+        fixit: 0,
         verification: 3
     };
 
@@ -84,6 +100,192 @@ app.use(async (req, res, next) => {
 
 function requireLogin(req, res, next) {
     return isAuthenticated(req, res, next);
+}
+
+function canManageOffer(offer, req) {
+    if (!offer || !req.session.user) {
+        return false;
+    }
+
+    return offer.user_id === req.session.user.id || req.session.user.role === 'admin';
+}
+
+async function ensureResourceOfferImageColumn() {
+    const [columns] = await db.execute(
+        `SHOW COLUMNS FROM resource_offers LIKE 'image_filename'`
+    );
+
+    if (columns.length === 0) {
+        await db.execute(
+            `ALTER TABLE resource_offers
+             ADD COLUMN image_filename VARCHAR(255) NULL AFTER notes`
+        );
+    }
+}
+
+async function ensureIncidentImageColumn() {
+    const [columns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image'`
+    );
+
+    if (columns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image VARCHAR(255) NULL AFTER description`
+        );
+    }
+
+    const [dataColumns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image_data'`
+    );
+
+    if (dataColumns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image_data MEDIUMBLOB NULL AFTER image`
+        );
+    }
+
+    const [mimeColumns] = await db.execute(
+        `SHOW COLUMNS FROM incidents LIKE 'image_mime_type'`
+    );
+
+    if (mimeColumns.length === 0) {
+        await db.execute(
+            `ALTER TABLE incidents
+             ADD COLUMN image_mime_type VARCHAR(100) NULL AFTER image_data`
+        );
+    }
+
+    await migrateLegacyIncidentImages();
+}
+
+async function ensureEmailTables() {
+    const emailColumns = [
+        ['email_verified', 'BOOLEAN NOT NULL DEFAULT TRUE'],
+        ['verification_token_hash', 'VARCHAR(255) NULL'],
+        ['verification_token_expires_at', 'DATETIME NULL'],
+        ['verification_email_sent_at', 'DATETIME NULL']
+    ];
+
+    for (const [name, definition] of emailColumns) {
+        const [columns] = await db.execute(`SHOW COLUMNS FROM users LIKE '${name}'`);
+        if (columns.length === 0) {
+            await db.execute(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);
+        }
+    }
+
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token_hash VARCHAR(255) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_password_reset_token_hash (token_hash),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+}
+
+async function migrateLegacyIncidentImages() {
+    const [legacyIncidents] = await db.execute(
+        `SELECT id, image
+         FROM incidents
+         WHERE image IS NOT NULL AND image_data IS NULL`
+    );
+
+    const mimeTypes = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+    };
+
+    for (const incident of legacyIncidents) {
+        const filename = path.basename(incident.image);
+        const mimeType = mimeTypes[path.extname(filename).toLowerCase()];
+
+        if (!mimeType) {
+            continue;
+        }
+
+        try {
+            const imageData = await fs.readFile(path.join(incidentUploadDir, filename));
+            await db.execute(
+                `UPDATE incidents
+                 SET image_data = ?, image_mime_type = ?, image = NULL
+                 WHERE id = ? AND image_data IS NULL`,
+                [imageData, mimeType, incident.id]
+            );
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                console.error(`Unable to migrate incident image ${filename}:`, error.message);
+            }
+        }
+    }
+}
+
+async function tableExists(tableName) {
+    const [rows] = await db.execute(
+        `SELECT TABLE_NAME
+         FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = ?`,
+        [tableName]
+    );
+    return rows.length > 0;
+}
+
+function getResourceImageUpload(req) {
+    const upload = req.files && req.files.image;
+
+    if (!upload) {
+        return null;
+    }
+
+    return Array.isArray(upload) ? upload[0] : upload;
+}
+
+async function saveResourceOfferImage(req) {
+    const upload = getResourceImageUpload(req);
+
+    if (!upload || !upload.name) {
+        return null;
+    }
+
+    const extension = path.extname(upload.name).toLowerCase();
+
+    if (!allowedResourceImageExtensions.has(extension)
+        || !allowedResourceImageMimeTypes.has(upload.mimetype)) {
+        throw new Error('Only PNG, JPG, JPEG, GIF and WEBP resource images are allowed.');
+    }
+
+    await fs.mkdir(resourceUploadDir, { recursive: true });
+
+    const safeBaseName = path.basename(upload.name, extension)
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .slice(0, 60) || 'resource';
+    const filename = `${Date.now()}_${safeBaseName}${extension}`;
+
+    await upload.mv(path.join(resourceUploadDir, filename));
+    return filename;
+}
+
+async function removeResourceOfferImage(filename) {
+    if (!filename) {
+        return;
+    }
+
+    try {
+        await fs.unlink(path.join(resourceUploadDir, filename));
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.error('Unable to remove resource image:', error.message);
+        }
+    }
 }
 
 function calculateMatchScore(offer, request) {
@@ -260,11 +462,15 @@ async function resolveSingaporeLocation(location) {
 app.get('/', isAuthenticated, authController.showDashboard);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
+app.use('/verification', verificationRoutes);
+app.use('/incidents', incidentRoutes);
+app.use('/fixit', fixitRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/incidents', requireLogin, async (req, res) => {
     try {
         const [incidents] = await db.execute(
-            `SELECT i.*, COALESCE(u.username, u.name) AS owner_name
+            `SELECT i.*, u.username AS owner_name
              FROM incidents i
              LEFT JOIN users u ON i.user_id = u.id
              ORDER BY i.created_at DESC`
@@ -312,7 +518,7 @@ app.post('/incidents', isAdmin, async (req, res) => {
 app.get('/incidents/:id', requireLogin, async (req, res) => {
     try {
         const [[incident]] = await db.execute(
-            `SELECT i.*, COALESCE(u.username, u.name) AS owner_name
+            `SELECT i.*, u.username AS owner_name
              FROM incidents i
              LEFT JOIN users u ON i.user_id = u.id
              WHERE i.id = ?`,
@@ -401,10 +607,13 @@ app.post('/incidents/:id/delete', isAdmin, async (req, res) => {
     }
 });
 
+
+
+// Help Requests Routes
 app.get('/helpRequests', requireLogin, async (req, res) => {
     try {
         const [requests] = await db.execute(
-            `SELECT hr.*, COALESCE(u.username, u.name) AS requester
+            `SELECT hr.*, u.username AS requester
              FROM help_requests hr
              LEFT JOIN users u ON hr.user_id = u.id
              ORDER BY hr.created_at DESC`
@@ -412,7 +621,9 @@ app.get('/helpRequests', requireLogin, async (req, res) => {
 
         res.render('helpRequests/index', {
             requests,
-            isAdmin: isAdminUser(req)
+            isAdmin:
+                req.session.user &&
+                req.session.user.role.toLowerCase() === 'admin'
         });
     } catch (error) {
         console.error(error);
@@ -452,7 +663,7 @@ app.post('/helpRequests', isAdmin, async (req, res) => {
 app.get('/helpRequests/:id', requireLogin, async (req, res) => {
     try {
         const [[request]] = await db.execute(
-            `SELECT hr.*, COALESCE(u.username, u.name) AS requester
+            `SELECT hr.*, u.username AS requester
              FROM help_requests hr
              LEFT JOIN users u ON hr.user_id = u.id
              WHERE hr.id = ?`,
@@ -503,6 +714,14 @@ app.post('/helpRequests/:id/update', isAdmin, async (req, res) => {
     const { title, category, quantity_needed, location, urgency, status } = req.body;
 
     try {
+        const [[existingRequest]] = await db.execute(
+            `SELECT hr.*, u.username AS requester_name, u.email AS requester_email
+             FROM help_requests hr
+             LEFT JOIN users u ON hr.user_id = u.id
+             WHERE hr.id = ?`,
+            [req.params.id]
+        );
+
         const [result] = await db.execute(
             `UPDATE help_requests
              SET title = ?, category = ?, quantity_needed = ?, location = ?, urgency = ?, status = ?
@@ -513,6 +732,25 @@ app.post('/helpRequests/:id/update', isAdmin, async (req, res) => {
         if (result.affectedRows === 0) {
             req.session.error = 'Unable to update help request.';
             return res.redirect(`/helpRequests/${req.params.id}/edit`);
+        }
+
+        if (existingRequest && existingRequest.requester_email) {
+            const eventType = status === 'Matched'
+                ? 'accepted'
+                : status === 'Closed'
+                    ? 'closed'
+                    : urgency !== existingRequest.urgency
+                        ? 'urgency_changed'
+                        : null;
+
+            if (eventType) {
+                sendHelpRequestUpdateEmail({
+                    email: existingRequest.requester_email,
+                    name: existingRequest.requester_name,
+                    helpRequestId: req.params.id,
+                    eventType
+                }).catch((emailError) => console.error('Unable to send help request email:', emailError.message));
+            }
         }
 
         req.session.success = 'Help request updated successfully.';
@@ -544,7 +782,8 @@ app.post('/helpRequests/:id/delete', isAdmin, async (req, res) => {
 app.get('/api/map-items', isAuthenticated, async (req, res) => {
     try {
         const [incidentResults] = await db.execute(
-            `SELECT id, title, location, severity, status
+            `SELECT id, title, location, severity, status, image,
+                    image_data IS NOT NULL AS has_image
              FROM incidents
              ORDER BY created_at DESC`
         );
@@ -555,7 +794,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
                  ORDER BY created_at DESC`
             ),
             db.execute(
-                `SELECT id, item_name, category, quantity, location, status
+                `SELECT id, item_name, category, quantity, location, status, image_filename
                  FROM resource_offers
                  ORDER BY created_at DESC`
             )
@@ -571,8 +810,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             location: incident.location,
             status: incident.status,
             severity: incident.severity,
-            url: `/?map=incident&item=incident-${incident.id}`,
-            actionLabel: 'View Incident on Map',
+            imageUrl: incident.has_image ? `/incidents/${incident.id}/image` : null,
             ...await resolveSingaporeLocation(incident.location)
         })));
 
@@ -585,8 +823,6 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             category: request.category,
             urgency: request.urgency,
             quantity: request.quantity_needed,
-            url: `/?map=help-request&item=help-request-${request.id}`,
-            actionLabel: 'View Request on Map',
             ...await resolveSingaporeLocation(request.location)
         })));
 
@@ -598,9 +834,7 @@ app.get('/api/map-items', isAuthenticated, async (req, res) => {
             status: offer.status,
             category: offer.category,
             quantity: offer.quantity,
-            url: `/resourceOffers/${offer.id}`,
-            mapUrl: `/?map=resource&item=resource-${offer.id}`,
-            actionLabel: 'Open Resource',
+            imageUrl: offer.image_filename ? `/uploads/resources/${offer.image_filename}` : null,
             ...await resolveSingaporeLocation(offer.location)
         })));
 
@@ -662,24 +896,6 @@ app.get('/api/location-suggestions', isAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/demo/member3-login', (req, res) => {
-    req.session.user = {
-        id: 1,
-        user_id: 1,
-        username: 'Guest',
-        name: 'Guest',
-        role: 'user'
-    };
-    req.session.success = 'Demo login active for Member 3 resource offer testing.';
-    res.redirect('/resourceOffers');
-});
-
-app.get('/demo/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/');
-    });
-});
-
 app.get('/resourceOffers', requireLogin, async (req, res) => {
     try {
         const [offers] = await db.execute(
@@ -710,6 +926,7 @@ app.get('/resourceOffers/new', requireLogin, (req, res) => {
 
 app.post('/resourceOffers', requireLogin, async (req, res) => {
     const { category, item_name, quantity, location, notes } = req.body;
+    let imageFilename = null;
 
     if (!location || !location.trim()) {
         req.session.error = 'Please select or enter a valid location.';
@@ -717,11 +934,21 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
     }
 
     try {
+        imageFilename = await saveResourceOfferImage(req);
+
         const [result] = await db.execute(
             `INSERT INTO resource_offers
-                (user_id, category, item_name, quantity, location, notes, status)
-             VALUES (?, ?, ?, ?, ?, ?, 'Available')`,
-            [req.session.user.id, category, item_name, quantity, location.trim(), notes || null]
+                (user_id, category, item_name, quantity, location, notes, image_filename, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Available')`,
+            [
+                req.session.user.id,
+                category,
+                item_name,
+                quantity,
+                location.trim(),
+                notes || null,
+                imageFilename
+            ]
         );
 
         await refreshMatchesForOffer(result.insertId);
@@ -730,7 +957,10 @@ app.post('/resourceOffers', requireLogin, async (req, res) => {
         res.redirect(`/resourceOffers/${result.insertId}`);
     } catch (error) {
         console.error(error);
-        req.session.error = 'Unable to create resource offer.';
+        await removeResourceOfferImage(imageFilename);
+        req.session.error = error.message.includes('resource images')
+            ? error.message
+            : 'Unable to create resource offer.';
         res.redirect('/resourceOffers/new');
     }
 });
@@ -806,6 +1036,12 @@ app.get('/resourceOffers/:id/edit', requireLogin, async (req, res) => {
 
 app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
     const { category, item_name, quantity, location, notes, status } = req.body;
+    let imageFilename = null;
+
+    if (!location || !location.trim()) {
+        req.session.error = 'Please select or enter a valid location.';
+        return res.redirect(`/resourceOffers/${req.params.id}/edit`);
+    }
 
     try {
         const [[offer]] = await db.execute(
@@ -818,11 +1054,23 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
             return res.redirect('/resourceOffers');
         }
 
+        imageFilename = await saveResourceOfferImage(req);
+        const nextImageFilename = imageFilename || offer.image_filename || null;
+
         const [result] = await db.execute(
             `UPDATE resource_offers
-             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, status = ?
+             SET category = ?, item_name = ?, quantity = ?, location = ?, notes = ?, image_filename = ?, status = ?
              WHERE id = ?`,
-            [category, item_name, quantity, location, notes || null, status, req.params.id]
+            [
+                category,
+                item_name,
+                quantity,
+                location.trim(),
+                notes || null,
+                nextImageFilename,
+                status,
+                req.params.id
+            ]
         );
 
         if (result.affectedRows === 0) {
@@ -832,11 +1080,18 @@ app.post('/resourceOffers/:id/update', requireLogin, async (req, res) => {
 
         await refreshMatchesForOffer(req.params.id);
 
+        if (imageFilename && offer.image_filename) {
+            await removeResourceOfferImage(offer.image_filename);
+        }
+
         req.session.success = 'Resource offer updated.';
         res.redirect(`/resourceOffers/${req.params.id}`);
     } catch (error) {
         console.error(error);
-        req.session.error = 'Unable to update resource offer.';
+        await removeResourceOfferImage(imageFilename);
+        req.session.error = error.message.includes('resource images')
+            ? error.message
+            : 'Unable to update resource offer.';
         res.redirect(`/resourceOffers/${req.params.id}/edit`);
     }
 });
@@ -857,6 +1112,10 @@ app.post('/resourceOffers/:id/delete', requireLogin, async (req, res) => {
             'DELETE FROM resource_offers WHERE id = ?',
             [req.params.id]
         );
+
+        if (result.affectedRows) {
+            await removeResourceOfferImage(offer.image_filename);
+        }
 
         req.session[result.affectedRows ? 'success' : 'error'] =
             result.affectedRows ? 'Resource offer deleted.' : 'Resource offer not found.';
@@ -953,10 +1212,47 @@ app.post('/matches/:id/reject', requireLogin, async (req, res) => {
         res.redirect('/resourceOffers');
     }
 });
-app.use('/verification', verificationRoutes);
+
+app.get('/api/live-incidents', async (req, res) => {
+
+    try {
+
+        const [incidents] = await db.execute(
+            `SELECT id, title, location, status
+             FROM incidents
+             ORDER BY created_at DESC
+             LIMIT 10`
+        );
+
+        res.json(incidents);
+
+    } catch (error) {
+
+        console.error('Unable to load live incidents:', error);
+
+        res.status(500).json({
+            error: 'Unable to load live incidents.'
+        });
+
+    }
+
+});
 
 console.log("=== THIS IS THE SERVER I AM RUNNING ===");
 
-app.listen(PORT, () => {
-    console.log(`CrisisHub running on http://localhost:${PORT}`);
-});
+async function startServer() {
+    try {
+        await ensureEmailTables();
+        await ensureResourceOfferImageColumn();
+        await ensureIncidentImageColumn();
+    } catch (error) {
+        console.error('Unable to prepare image upload columns:', error.message);
+    }
+
+    console.log("=== FIXIT ROUTES LOADED ===");
+    app.listen(PORT, () => {
+        console.log(`CrisisHub running on http://localhost:${PORT}`);
+    });
+}
+
+startServer();

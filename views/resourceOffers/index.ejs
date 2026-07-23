@@ -40,10 +40,12 @@
             <table class="table table-dark table-hover align-middle resource-table">
                 <thead>
                     <tr>
+                        <th>Image</th>
                         <th>Item</th>
                         <th>Category</th>
                         <th>Quantity</th>
                         <th>Location</th>
+                        <th>Expiry</th>
                         <th>Status</th>
                         <th>Matches</th>
                         <th class="text-end">Action</th>
@@ -53,12 +55,28 @@
                     <% offers.forEach((offer) => { %>
                         <tr>
                             <td>
+                                <% if (offer.image_filename) { %>
+                                    <img class="resource-thumb" src="/uploads/resources/<%= offer.image_filename %>" alt="<%= offer.item_name %> image">
+                                <% } else { %>
+                                    <div class="resource-thumb resource-thumb-empty">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                <% } %>
+                            </td>
+                            <td>
                                 <strong><%= offer.item_name %></strong>
                                 <div class="text-secondary small"><%= offer.notes || 'No notes added' %></div>
                             </td>
                             <td><%= offer.category %></td>
                             <td><%= offer.quantity %></td>
                             <td><%= offer.location %></td>
+                            <td>
+                                <% if (offer.expires_at) { %>
+                                    <span class="resource-expiry-countdown" data-expiry-countdown data-expires-at="<%= new Date(offer.expires_at).toISOString() %>">Calculating...</span>
+                                <% } else { %>
+                                    <span class="text-secondary">No expiry</span>
+                                <% } %>
+                            </td>
                             <td><span class="status-pill"><%= offer.status %></span></td>
                             <td>
                                 <%= offer.match_count %>
@@ -81,3 +99,5 @@
         </div>
     <% } %>
 </div>
+
+<script src="/js/expiryCountdown.js"></script>

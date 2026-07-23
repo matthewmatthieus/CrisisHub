@@ -1,0 +1,16 @@
+<div class="container py-5">
+    <div class="row justify-content-center"><div class="col-12 col-md-7 col-lg-5">
+        <div class="card shadow-sm border-0"><div class="card-body p-4 p-md-5">
+            <h3 class="fw-bold">Verify your email</h3>
+            <p class="text-muted">Check your inbox for the CrisisHub verification link before logging in.</p>
+            <% if (success) { %><div class="alert alert-success"><%= success %></div><% } %>
+            <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+            <form method="POST" action="/auth/resend-verification">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-control mb-3" id="email" name="email" type="email" value="<%= email || '' %>" required>
+                <button class="btn btn-primary w-100" type="submit">Resend verification email</button>
+            </form>
+            <p class="text-center mt-4 mb-0"><a href="/auth/login">Back to login</a></p>
+        </div></div>
+    </div></div>
+</div>

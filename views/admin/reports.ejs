@@ -1,0 +1,157 @@
+<div class="admin-hero">
+    <div>
+        <span class="admin-section-label">Administration</span>
+        <h1 class="mb-2">Manage Reports</h1>
+        <p class="lead mb-0">Track incident, request, offer, and FixIt SG report queues.</p>
+    </div>
+    <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="admin-panel-card">
+            <div class="admin-table-tools">
+                <div>
+                    <div class="admin-section-label">Incidents</div>
+                    <h3 class="mb-0"><%= incidents.length %> Records</h3>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% incidents.forEach(function(incident) { %>
+                            <tr>
+                                <td><%= incident.title %></td>
+                                <td><%= incident.category %></td>
+                                <td><span class="badge bg-danger"><%= incident.severity %></span></td>
+                                <td><span class="badge bg-secondary"><%= incident.status %></span></td>
+                                <td><%= incident.location %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="admin-panel-card">
+            <div class="admin-table-tools">
+                <div>
+                    <div class="admin-section-label">Help Requests</div>
+                    <h3 class="mb-0"><%= helpRequests.length %> Records</h3>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                            <th>Quantity Needed</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% helpRequests.forEach(function(request) { %>
+                            <tr>
+                                <td><%= request.title %></td>
+                                <td><%= request.category %></td>
+                                <td><span class="badge bg-warning text-dark"><%= request.urgency %></span></td>
+                                <td><span class="badge bg-secondary"><%= request.status %></span></td>
+                                <td><%= request.quantity_needed %></td>
+                                <td><%= request.location %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="admin-panel-card">
+            <div class="admin-table-tools">
+                <div>
+                    <div class="admin-section-label">Resource Offers</div>
+                    <h3 class="mb-0"><%= resourceOffers.length %> Records</h3>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% resourceOffers.forEach(function(offer) { %>
+                            <tr>
+                                <td><%= offer.item_name %></td>
+                                <td><%= offer.category %></td>
+                                <td><%= offer.quantity %></td>
+                                <td><span class="badge bg-secondary"><%= offer.status %></span></td>
+                                <td><%= offer.location %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="admin-panel-card">
+            <div class="admin-table-tools">
+                <div>
+                    <div class="admin-section-label">FixIt SG Reports</div>
+                    <h3 class="mb-0"><%= fixitReports.length %> Records</h3>
+                </div>
+            </div>
+
+            <% if (!fixitAvailable) { %>
+                <div class="alert alert-warning mb-0">FixIt SG reports are not available in this database.</div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% fixitReports.forEach(function(report) { %>
+                                <tr>
+                                    <td><%= report.title %></td>
+                                    <td><%= report.category %></td>
+                                    <td><span class="badge bg-danger"><%= report.severity %></span></td>
+                                    <td><span class="badge bg-secondary"><%= report.status || 'Open' %></span></td>
+                                    <td><%= report.location %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
