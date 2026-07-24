@@ -104,7 +104,7 @@ exports.confirmIncident = async (req, res) => {
         );
 
         // Auto verify only if BOTH conditions are met
-        if (confirmCount >= 3 && confidence >= 80) {
+        if (confidence >= 80) {
 
             await db.execute(`
                 UPDATE incidents
@@ -165,7 +165,7 @@ exports.disputeIncident = async (req, res) => {
         );
 
         // Auto verify only if BOTH conditions are met
-        if (confirmCount >= 3 && confidence >= 80) {
+        if (confidence >= 80) {
 
             await db.execute(`
                 UPDATE incidents
