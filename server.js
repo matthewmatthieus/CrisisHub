@@ -722,7 +722,7 @@ app.get('/helpRequests', requireLogin, async (req, res) => {
 });
 
 app.get('/helpRequests/new', isAdmin, (req, res) => {
-    res.render('helpRequests/form', {
+    res.render('helpRequests/new', {
         request: null,
         formAction: '/helpRequests',
         pageTitle: 'Create Help Request'
@@ -766,7 +766,7 @@ app.get('/helpRequests/:id', requireLogin, async (req, res) => {
 
         res.render('helpRequests/show', {
             request,
-            isAdmin: isAdminUser(req)
+            isAdmin: req.session.user?.role === "admin"
         });
     } catch (error) {
         console.error(error);
@@ -787,7 +787,7 @@ app.get('/helpRequests/:id/edit', isAdmin, async (req, res) => {
             return res.redirect('/helpRequests');
         }
 
-        res.render('helpRequests/form', {
+        res.render('helpRequests/edit', {
             request,
             formAction: `/helpRequests/${request.id}/update`,
             pageTitle: 'Edit Help Request'
