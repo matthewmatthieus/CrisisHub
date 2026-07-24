@@ -87,7 +87,6 @@ exports.confirmIncident = async (req, res) => {
             [incidentId, userId]
         );
 
-        // Get latest vote totals
         const [[votes]] = await db.execute(`
             SELECT
                 COUNT(CASE WHEN vote_type='confirm' THEN 1 END) AS confirmCount,
@@ -96,13 +95,16 @@ exports.confirmIncident = async (req, res) => {
             WHERE incident_id=?
         `, [incidentId]);
 
+        const confirmCount = Number(votes.confirmCount);
+        const disputeCount = Number(votes.disputeCount);
+
         const confidence = verificationService.calculateConfidence(
-            Number(votes.confirmCount),
-            Number(votes.disputeCount)
+            confirmCount,
+            disputeCount
         );
 
-        // Auto verify if confidence is high enough
-        if (confidence >= 80) {
+        // Auto verify only if BOTH conditions are met
+        if (confirmCount >= 3 && confidence >= 80) {
 
             await db.execute(`
                 UPDATE incidents
@@ -154,12 +156,16 @@ exports.disputeIncident = async (req, res) => {
             WHERE incident_id=?
         `, [incidentId]);
 
+        const confirmCount = Number(votes.confirmCount);
+        const disputeCount = Number(votes.disputeCount);
+
         const confidence = verificationService.calculateConfidence(
-            Number(votes.confirmCount),
-            Number(votes.disputeCount)
+            confirmCount,
+            disputeCount
         );
 
-        if (confidence >= 80) {
+        // Auto verify only if BOTH conditions are met
+        if (confirmCount >= 3 && confidence >= 80) {
 
             await db.execute(`
                 UPDATE incidents
