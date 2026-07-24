@@ -20,7 +20,7 @@
             <div class="admin-section-label">Resolution</div>
             <h3 class="mb-3">Incident Resolution Rate</h3>
             <div class="table-responsive">
-                <table class="table align-middle">
+                <table class="table resource-table align-middle">
                     <thead>
                         <tr>
                             <th>Month</th>
@@ -49,7 +49,7 @@
             <div class="admin-section-label">Monthly</div>
             <h3 class="mb-3">Reports per Month</h3>
             <div class="table-responsive">
-                <table class="table align-middle">
+                <table class="table resource-table align-middle">
                     <thead>
                         <tr>
                             <th>Month</th>
@@ -71,6 +71,6 @@
 </div>
 
 <div class="row g-4">
-    <div class="col-xl-6"><div class="admin-panel-card h-100"><div class="admin-section-label">Incident Categories</div><h3 class="mb-3">Top Categories</h3><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Category</th><th>Total</th></tr></thead><tbody><% charts.incidentCategories.forEach(function(row) { %><tr><td><%= row.category %></td><td><%= row.total %></td></tr><% }) %></tbody></table></div></div></div>
-    <div class="col-xl-6"><div class="admin-panel-card h-100"><div class="admin-section-label">Resource Requests</div><h3 class="mb-3">Top Requested Resources</h3><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Category</th><th>Total</th></tr></thead><tbody><% charts.resourceCategories.forEach(function(row) { %><tr><td><%= row.category %></td><td><%= row.total %></td></tr><% }) %></tbody></table></div></div></div>
+    <div class="col-xl-6"><div class="admin-panel-card h-100"><div class="admin-section-label">Incident Categories</div><h3 class="mb-3">Top Categories</h3><div class="table-responsive"><table class="table resource-table align-middle"><thead><tr><th>Category</th><th>Total</th></tr></thead><tbody><% charts.incidentCategories.forEach(function(row) { %><tr><td><%= row.category %></td><td><%= row.total %></td></tr><% }) %></tbody></table></div></div></div>
+    <div class="col-xl-6"><div class="admin-panel-card h-100"><div class="admin-section-label">Resource Requests</div><h3 class="mb-3">Top Requested Resources</h3><div class="table-responsive"><table class="table resource-table align-middle"><thead><tr><th>Category</th><th>Total</th></tr></thead><tbody><% charts.resourceCategories.forEach(function(row) { %><tr><td><%= row.category %></td><td><%= row.total %></td></tr><% }) %></tbody></table></div></div></div>
 </div>

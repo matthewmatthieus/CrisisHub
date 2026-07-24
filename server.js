@@ -46,6 +46,7 @@ const legacyFileUpload = fileUpload({
 app.use((req, res, next) => {
     return legacyFileUpload(req, res, next);
 });
+
 app.use(session({
     secret: process.env.SESSION_SECRET || (isProduction ? undefined : 'crisishub-dev-secret'),
     resave: false,

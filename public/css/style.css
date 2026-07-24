@@ -2459,7 +2459,6 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
 }
 
 .admin-activity-item{
-
     display:flex;
     justify-content:space-between;
     gap:16px;
@@ -2467,16 +2466,17 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
     border:1px solid var(--border);
     border-radius:14px;
     background:#111827;
+}
 
-    .profile-activity-table-wrap{
-        max-height: 320px;
-        overflow-y: auto;
-    }
-    .profile-activity-table-wrap thead th{
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
+.profile-activity-table-wrap{
+    max-height:320px;
+    overflow-y:auto;
+}
+
+.profile-activity-table-wrap thead th{
+    position:sticky;
+    top:0;
+    z-index:1;
 }
 
 .admin-activity-item strong{
@@ -2528,4 +2528,62 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{
 
 .live-separator {
     color: var(--text-muted);
+}
+
+/* ==========================
+   Admin Moderation Table
+========================== */
+
+.admin-panel-card{
+    overflow:hidden;
+}
+
+.admin-panel-card .table-responsive{
+    width:100%;
+    overflow-x:auto;
+}
+
+.admin-panel-card table{
+    width:100%;
+    min-width:1200px;
+    white-space:nowrap;
+}
+
+.admin-panel-card td,
+.admin-panel-card th{
+    vertical-align:middle;
+}
+
+.admin-panel-card td:first-child{
+    min-width:300px;
+    white-space:normal;
+}
+
+.admin-panel-card td:nth-child(7){
+    min-width:240px;
+    white-space:normal;
+}
+
+.admin-panel-card table{
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: transparent;
+    --bs-table-hover-bg: rgba(59,130,246,.08);
+    --bs-table-color: var(--text-primary);
+    --bs-table-border-color: var(--border);
+    color: var(--text-primary);
+}
+
+.admin-panel-card thead{
+    background:#1f2b3d;
+}
+
+.admin-panel-card thead th{
+    background:#1f2b3d;
+    color:var(--text-secondary);
+    border:none;
+}
+
+.admin-panel-card tbody td{
+    background:transparent;
+    color:var(--text-primary);
 }

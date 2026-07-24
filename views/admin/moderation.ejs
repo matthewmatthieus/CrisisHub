@@ -1,12 +1,196 @@
 <div class="admin-hero">
     <div>
         <span class="admin-section-label">Administration</span>
-        <h1 class="mb-2">Moderate Reports</h1>
-        <p class="lead mb-0">Moderation tools are temporarily unavailable while FixIt SG is rebuilt.</p>
+        <h1 class="mb-2">FixIt SG Moderation</h1>
+        <p class="lead mb-0">
+            Monitor community FixIt reports and update their progress.
+        </p>
     </div>
-    <a class="btn btn-outline-light" href="/admin">Back to Dashboard</a>
+
+    <a href="/admin" class="btn btn-outline-light">
+        Back to Dashboard
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="admin-panel-card text-center">
+            <small class="text-muted">OPEN</small>
+            <h2 class="text-warning mt-2"><%= stats.pending %></h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="admin-panel-card text-center">
+            <small class="text-muted">IN PROGRESS</small>
+            <h2 class="text-primary mt-2"><%= stats.inProgress %></h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="admin-panel-card text-center">
+            <small class="text-muted">RESOLVED</small>
+            <h2 class="text-success mt-2"><%= stats.completed %></h2>
+        </div>
+    </div>
+
 </div>
 
 <div class="admin-panel-card">
-    <div class="alert alert-info mb-0">FixIt SG moderation endpoints were removed as part of the module reset.</div>
+    <div class="table-responsive">
+
+    <% if(reports.length === 0){ %>
+
+        <div class="alert alert-info mb-0">
+            There are currently no FixIt reports.
+        </div>
+
+    <% } else { %>
+
+    <div class="table-responsive">
+
+        <table class="table resource table align-middle">
+
+            <thead>
+
+                <tr>
+
+                    <th>Issue</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Reporter</th>
+                    <th>Helpers</th>
+                    <th>Status</th>
+                    <th>Location</th>
+                    <th>Reported</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            <% reports.forEach(report=>{ %>
+
+                <tr>
+
+                    <td>
+
+                        <strong>
+                            <%= report.title %>
+                        </strong>
+
+                        <br>
+
+                        <small class="text-muted">
+                            <%= report.description %>
+                        </small>
+
+                    </td>
+
+                    <td>
+
+                        <span class="badge bg-secondary">
+                            <%= report.category %>
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <% if(report.severity==="High"){ %>
+
+                            <span class="badge bg-danger">
+                                High
+                            </span>
+
+                        <% } else if(report.severity==="Medium"){ %>
+
+                            <span class="badge bg-warning text-dark">
+                                Medium
+                            </span>
+
+                        <% } else { %>
+
+                            <span class="badge bg-success">
+                                Low
+                            </span>
+
+                        <% } %>
+
+                    </td>
+
+                    <td>
+
+                        <%= report.username %>
+
+                    </td>
+
+                    <td>
+
+                        <span class="badge bg-primary">
+
+                            <%= report.helpers %> joined
+
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <% if(report.status==="Open"){ %>
+
+                            <span class="badge bg-warning text-dark">
+                                Open
+                            </span>
+
+                        <% } else if(report.status==="In Progress"){ %>
+
+                            <span class="badge bg-info">
+                                In Progress
+                            </span>
+
+                        <% } else { %>
+
+                            <span class="badge bg-success">
+                                Resolved
+                            </span>
+
+                        <% } %>
+
+                    </td>
+
+                    <td>
+
+                        <small>
+
+                            <%= report.location %>
+
+                        </small>
+
+                    </td>
+
+                    <td>
+
+                        <small>
+
+                            <%= new Date(report.created_at).toLocaleString() %>
+
+                        </small>
+
+                    </td>
+
+                </tr>
+
+            <% }) %>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <% } %>
+    </div> <!-- table-responsive -->
 </div>

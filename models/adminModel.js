@@ -282,7 +282,56 @@ async function getIncidentData() {
 }
 
 async function getModerationData() {
-    return {};
+
+    const [reports] = await db.execute(`
+        SELECT
+            f.*,
+            u.username,
+
+            0 AS helpers
+
+        FROM fixit_reports f
+
+        LEFT JOIN users u
+            ON u.id = f.user_id
+
+        ORDER BY
+            FIELD(f.status,'Open','In Progress','Resolved'),
+            f.created_at DESC
+    `);
+
+    const [[open]] = await db.execute(`
+        SELECT COUNT(*) AS total
+        FROM fixit_reports
+        WHERE status='Open'
+    `);
+
+    const [[progress]] = await db.execute(`
+        SELECT COUNT(*) AS total
+        FROM fixit_reports
+        WHERE status='In Progress'
+    `);
+
+    const [[resolved]] = await db.execute(`
+        SELECT COUNT(*) AS total
+        FROM fixit_reports
+        WHERE status='Resolved'
+    `);
+
+    return {
+
+        reports,
+
+        stats: {
+
+            pending: open.total,
+            inProgress: progress.total,
+            completed: resolved.total
+
+        }
+
+    };
+
 }
 
 async function getStatisticsData() {

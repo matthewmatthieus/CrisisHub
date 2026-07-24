@@ -205,9 +205,15 @@ async function login(req, res) {
             name: user.username
         };
 
-        await activityModel.logActivity(user.id, 'Logged in');
-        req.session.success = 'Login successful.';
-        return res.redirect('/');
+        req.session.save((err) => {
+            if (err) {
+                console.error(err);
+            }
+
+            return res.redirect('/');
+        });
+
+
     } catch (error) {
         console.error(error);
         return res.status(500).render('auth/login', {
