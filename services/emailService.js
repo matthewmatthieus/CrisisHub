@@ -29,17 +29,30 @@ function escapeHtml(value) {
 }
 let transporter;
 
+function emailConfig() {
+    return {
+        user: String(process.env.GMAIL_USER || '').trim(),
+        // Google displays app passwords with spaces; SMTP expects the 16 characters without them.
+        password: String(process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, ''),
+        from: String(process.env.EMAIL_FROM || '').trim()
+    };
+}
+
 function getTransporter() {
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    const config = emailConfig();
+
+    if (!config.user || !config.password) {
         throw new Error('GMAIL_USER and GMAIL_APP_PASSWORD are not configured.');
     }
 
     if (!transporter) {
         transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
             auth: {
-                user: process.env.GMAIL_USER,
-                pass: process.env.GMAIL_APP_PASSWORD
+                user: config.user,
+                pass: config.password
             }
         });
     }
@@ -47,8 +60,10 @@ function getTransporter() {
     return transporter;
 }
 async function sendEmail({ to, subject, html }) {
+    const config = emailConfig();
+
     return getTransporter().sendMail({
-        from: process.env.EMAIL_FROM || process.env.GMAIL_USER,
+        from: config.from || config.user,
         to,
         subject,
         html
